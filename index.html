@@ -33,8 +33,8 @@ a{color:var(--brown-700)}
 .topbar-in{max-width:1240px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
 .brand-logo{width:42px;height:42px;border-radius:12px;background:var(--brown-700);display:grid;place-items:center;overflow:hidden;flex:none}
-.brand-logo:has(img){width:auto;height:42px;border-radius:0;background:none;overflow:visible}
-.brand-logo img{width:auto;height:100%;max-width:160px;object-fit:contain;display:block}
+.brand-logo.has-img{width:auto;height:40px;max-width:180px;border-radius:0;background:none;overflow:hidden;display:flex;align-items:center;padding:0}
+.brand-logo.has-img img{width:auto;height:40px;max-width:180px;object-fit:contain;display:block}
 .brand-t1{font-family:var(--head);font-weight:600;font-size:16px;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .brand-t2{font-size:12px;color:var(--muted);white-space:nowrap}
 .spacer{flex:1}
@@ -119,8 +119,8 @@ tbody tr:hover{background:var(--brown-100)}
   background:radial-gradient(1000px 500px at 50% -10%, var(--brown-200), var(--cream) 60%)}
 .login{width:100%;max-width:400px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:32px 26px;box-shadow:var(--shadow);text-align:center}
 .login .lg{width:70px;height:70px;border-radius:20px;background:var(--brown-700);margin:0 auto 14px;display:grid;place-items:center;overflow:hidden}
-.login .lg:has(img){width:auto;height:80px;border-radius:0;background:none;overflow:visible}
-.login .lg img{width:auto;height:100%;max-width:100%;object-fit:contain;display:block;margin:0 auto}
+.login .lg.has-img{width:auto;height:78px;max-width:100%;border-radius:0;background:none;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.login .lg.has-img img{width:auto;height:78px;max-width:100%;object-fit:contain;display:block}
 .login h1{font-size:20px;margin-bottom:4px}
 .login p{color:var(--muted);font-size:13px;margin-bottom:20px}
 
@@ -128,9 +128,17 @@ tbody tr:hover{background:var(--brown-100)}
 .pub{max-width:660px;margin:0 auto;padding:22px 16px 80px}
 .pub-head{background:linear-gradient(140deg,var(--brown-700),var(--brown-500));color:#fff;border-radius:22px;padding:26px 22px;text-align:center;margin-bottom:18px;box-shadow:var(--shadow)}
 .pub-head .lg{width:62px;height:62px;border-radius:18px;background:rgba(255,255,255,.18);margin:0 auto 12px;display:grid;place-items:center;overflow:hidden}
-.pub-head .lg:has(img){width:auto;height:72px;border-radius:0;background:none;overflow:visible}
-.pub-head .lg img{width:auto;height:100%;max-width:100%;object-fit:contain;display:block;margin:0 auto}
+.pub-head .lg.has-img{width:auto;height:68px;max-width:100%;border-radius:0;background:none;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.pub-head .lg.has-img img{width:auto;height:68px;max-width:100%;object-fit:contain;display:block}
 .pub-head h1{font-size:20px}
+.cd-box{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;text-align:center;margin-bottom:16px;box-shadow:var(--shadow)}
+.cd-box .cd-lb{font-size:13px;color:var(--muted)}
+.cd-nums{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.cd-nums div{min-width:64px;background:var(--brown-100);border-radius:12px;padding:8px 6px}
+.cd-nums b{display:block;font-family:var(--head);font-size:22px;color:var(--brown-800);line-height:1.1}
+.cd-nums span{font-size:11.5px;color:var(--muted)}
+.cd-box.over{border-color:#e8c6c1}
+.cd-box.over .cd-lb{color:var(--bad)}
 .pub-head p{opacity:.9;font-size:13.5px;margin-top:4px}
 .qbox{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
 .qbox h4{font-size:15px;margin-bottom:10px}
@@ -352,10 +360,9 @@ function applyBranding(){
   const t=$('#hdTitle'), s=$('#hdSub');
   if(t) t.textContent='ระบบจัดการ'+(S.cfg.campName||'ค่ายวรรณธารกระดุมทอง');
   if(s) s.textContent=[S.cfg.school,S.cfg.eventDate].filter(Boolean).join(' · ')||'ตั้งค่าชื่อโรงเรียน/วันจัดงานได้ที่เมนูตั้งค่า';
-  if(S.cfg.logo){
-    const img='<img src="'+S.cfg.logo+'" alt="logo">';
-    ['#hdLogo','#loginLogo'].forEach(id=>{const e=$(id); if(e) e.innerHTML=img;});
-  }
+  const img='<img src="'+S.cfg.logo+'" alt="logo">';
+  ['#hdLogo','#loginLogo'].forEach(id=>{const e=$(id); if(!e) return;
+    if(S.cfg.logo){ e.innerHTML=img; e.classList.add('has-img'); } else { e.classList.remove('has-img'); }});
 }
 
 /* ================= ROUTER ================= */
@@ -912,6 +919,23 @@ function vSettings(v){
       เมื่อนักเรียนส่งแบบสำรวจความต้องการเข้าฐาน ให้เพิ่มชื่อเข้าทะเบียนผู้เข้าร่วมอัตโนมัติ</label>
     <label class="chk" style="margin-top:10px"><input type="checkbox" ${c.autoPlace!==false?'checked':''} onchange="setCfg('autoPlace',this.checked)">
       จัดนักเรียนลงฐาน "อันดับ 1" ที่เลือกทันทีเมื่อส่งแบบสำรวจ (ถ้าฐานเต็มจะเลื่อนไปลำดับถัดไปให้เอง)</label>
+  </div>
+  <div class="card card-pad" style="margin-top:16px">
+    <h3 style="font-size:16px;margin-bottom:8px">นับถอยหลังปิดลงทะเบียนเลือกฐาน</h3>
+    <label class="chk"><input type="checkbox" ${c.cdOn===true?'checked':''} onchange="setCfg('cdOn',this.checked).then(reload)">
+      แสดงตัวนับถอยหลังบนหน้าฟอร์มสำรวจความต้องการเข้าฐาน</label>
+    <div class="row c2" style="margin-top:12px">
+      <div class="field"><label>กำหนดปิดรับ (วัน–เวลา)</label>
+        <input class="inp" type="datetime-local" id="s_cdend" value="${esc(c.cdEnd||'')}"></div>
+      <div class="field" style="display:flex;align-items:flex-end">
+        <button class="btn" onclick="setCfg('cdEnd',val('s_cdend')).then(reload)">บันทึกเวลา</button></div>
+    </div>
+    <label class="chk"><input type="checkbox" ${c.cdClose!==false?'checked':''} onchange="setCfg('cdClose',this.checked)">
+      ปิดรับคำตอบอัตโนมัติเมื่อหมดเวลา</label>
+    <p style="font-size:13px;color:var(--muted);margin-top:8px">
+      ${c.cdOn===true&&c.cdEnd?('สถานะ: '+(new Date(c.cdEnd).getTime()>Date.now()?'กำลังนับถอยหลังถึง ':'หมดเวลาแล้วเมื่อ ')+new Date(c.cdEnd).toLocaleString('th-TH')):'ยังไม่ได้เปิดใช้งานหรือยังไม่ได้กำหนดเวลา'}</p>
+  </div>
+  <div class="card card-pad" style="margin-top:16px">
     <p style="font-size:13px;color:var(--muted);margin-top:8px">ถ้าปิดข้อแรกไว้ ต้องกดปุ่ม "ดึงรายชื่อจากแบบสำรวจ" ในแท็บผู้เข้าร่วมเอง — ระบบจับคู่ชื่อซ้ำให้อัตโนมัติ ไม่สร้างรายการซ้ำ<br>
       หากต้องการเกลี่ยจำนวนภายหลัง ใช้ปุ่ม "⚖ ปรับเกลี่ยฐาน" ในแท็บผู้เข้าร่วม</p>
   </div>
@@ -1178,17 +1202,45 @@ async function runBalance(mode){
   console.log('รายการย้าย:\n'+moves.join('\n'));
 }
 
+/* ================= COUNTDOWN ================= */
+let cdTimer=null;
+function cdEndMs(){const v=S.cfg.cdEnd; if(!v) return 0; const t=new Date(v).getTime(); return isNaN(t)?0:t;}
+function cdActive(){return S.cfg.cdOn===true && cdEndMs()>0;}
+function cdExpired(){return cdActive() && Date.now()>cdEndMs();}
+function cdHTML(){
+  if(!cdActive()) return '';
+  return `<div class="cd-box" id="cdBox"><div class="cd-lb" id="cdLb">เหลือเวลาลงทะเบียนเลือกฐาน</div>
+    <div class="cd-nums" id="cdNums"></div></div>`;
+}
+function cdTick(){
+  const box=$('#cdBox'), nums=$('#cdNums'), lb=$('#cdLb');
+  if(!box||!nums){ if(cdTimer){clearInterval(cdTimer);cdTimer=null;} return; }
+  let d=cdEndMs()-Date.now();
+  if(d<=0){
+    box.classList.add('over'); lb.textContent='หมดเวลาลงทะเบียนเลือกฐานแล้ว';
+    nums.innerHTML='<div style="min-width:auto;padding:8px 16px"><b>0</b><span>เหลือเวลา</span></div>';
+    clearInterval(cdTimer); cdTimer=null; return;
+  }
+  const dd=Math.floor(d/86400000), hh=Math.floor(d%86400000/3600000),
+        mm=Math.floor(d%3600000/60000), ss=Math.floor(d%60000/1000);
+  nums.innerHTML=[[dd,'วัน'],[hh,'ชั่วโมง'],[mm,'นาที'],[ss,'วินาที']]
+    .map(x=>`<div><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');
+}
+function cdStart(){ if(cdTimer) clearInterval(cdTimer); if(!cdActive()) return; cdTick(); cdTimer=setInterval(cdTick,1000); }
+
 /* ================= PUBLIC FORMS ================= */
 function renderPublic(kind){
   $('#loginView').classList.add('hide'); $('#appView').classList.add('hide');
   $('#publicView').classList.remove('hide');
   const logo=S.cfg.logo?`<img src="${S.cfg.logo}">`:`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><path d="M3 5.5A2.5 2.5 0 0 1 5.5 3H10a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H3z"/><path d="M21 5.5A2.5 2.5 0 0 0 18.5 3H14a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h7z"/></svg>`;
-  const head=(t,s)=>`<div class="pub-head"><div class="lg">${logo}</div><h1>${t}</h1><p>${s}</p></div>`;
+  const head=(t,s)=>`<div class="pub-head"><div class="lg${S.cfg.logo?' has-img':''}">${logo}</div><h1>${t}</h1><p>${s}</p></div>`;
   const sub=[S.cfg.school,S.cfg.eventDate].filter(Boolean).join(' · ');
   if(kind==='choose'){
     if(S.cfg.openChoice===false) return $('#pubBody').innerHTML=head('แบบสำรวจความต้องการเข้าฐาน',sub)+
       '<div class="card card-pad done"><div class="ic">🔒</div><h3>ปิดรับคำตอบแล้ว</h3><p style="color:var(--muted)">ขณะนี้ระบบปิดรับแบบสำรวจนี้</p></div>';
-    $('#pubBody').innerHTML=head('แบบสำรวจความต้องการเข้าฐาน',(S.cfg.campName||'')+(sub?' · '+sub:''))+`
+    if(cdExpired() && S.cfg.cdClose!==false) return $('#pubBody').innerHTML=head('แบบสำรวจความต้องการเข้าฐาน',sub)+
+      '<div class="card card-pad done"><div class="ic">⏰</div><h3>หมดเวลาลงทะเบียนเลือกฐานแล้ว</h3><p style="color:var(--muted)">ระบบปิดรับคำตอบตามกำหนดเวลา</p></div>';
+    $('#pubBody').innerHTML=head('แบบสำรวจความต้องการเข้าฐาน',(S.cfg.campName||'')+(sub?' · '+sub:''))+cdHTML()+`
       <div class="qbox">
         <div class="field ac-wrap"><label>ชื่อ–สกุล ${S.roster.length?'<span style="color:var(--muted);font-weight:400">(พิมพ์ชื่อ แล้วเลือกจากรายการ)</span>':''}</label>
           <input class="inp" id="c_name" autocomplete="off" placeholder="${S.roster.length?'พิมพ์ชื่อของนักเรียน…':'เช่น สมชาย ใจดี'}"
@@ -1210,6 +1262,7 @@ function renderPublic(kind){
             <div style="font-size:12.5px;color:var(--muted)">วิทยากร: ${esc(b.speaker||'-')}</div></div></div>`).join('')}</div>
       </div>
       <button class="btn" style="width:100%;justify-content:center;padding:13px" onclick="submitChoice()">ส่งแบบสำรวจ</button>`;
+    cdStart();
   } else {
     if(S.cfg.openEval===false) return $('#pubBody').innerHTML=head('แบบประเมินความพึงพอใจ',sub)+
       '<div class="card card-pad done"><div class="ic">🔒</div><h3>ปิดรับคำตอบแล้ว</h3><p style="color:var(--muted)">ขณะนี้ระบบปิดรับแบบประเมินนี้</p></div>';
@@ -1286,6 +1339,7 @@ async function submitChoice(){
   if(picked.length<1) return toast('กรุณาเลือกฐานอย่างน้อย 1 ฐาน');
   const btn=event&&event.target; if(btn){btn.disabled=true;btn.textContent='กำลังส่ง…';}
   try{
+    if(cdExpired() && S.cfg.cdClose!==false) return toast('หมดเวลาลงทะเบียนเลือกฐานแล้ว');
     const level=val('c_level'), room=val('c_room').trim(), prefix=val('c_prefix');
     let pid='', placed='';
     if(S.cfg.autoCreate!==false){
