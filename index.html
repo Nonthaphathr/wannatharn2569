@@ -181,15 +181,15 @@ dialog::backdrop{background:rgba(59,37,25,.45);backdrop-filter:blur(2px)}
 
 /* ---------- PRINT: name tags ---------- */
 #printRoot{display:none}
-.a4{width:210mm;height:297mm;display:grid;grid-template-columns:105mm 105mm;grid-template-rows:148.5mm 148.5mm;page-break-after:always;background:#fff}
-.tag6{width:105mm;height:148.5mm;padding:1.5mm;display:flex}
+.a4{width:210mm;height:297mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;page-break-after:always;background:#fff;overflow:hidden}
+.tag6{width:100%;height:100%;padding:1.5mm;display:flex;box-sizing:border-box}
 .tag-in{flex:1;border:1.8mm solid var(--tc,#6b4630);border-radius:5mm;display:flex;flex-direction:column;
   align-items:center;text-align:center;position:relative;overflow:hidden;background:#fff;padding:0 0 5mm}
 .tag-in:before{content:"";position:absolute;top:0;left:0;right:0;height:14mm;background:var(--tc,#6b4630)}
 .tag-camp{position:absolute;top:3.8mm;left:0;right:0;color:#fff;font-family:var(--head);font-size:4.2mm;letter-spacing:.4mm;z-index:2}
-.tag-logo{width:auto;max-width:70mm;height:32mm;margin-top:20mm;display:grid;place-items:center;overflow:visible;position:relative;z-index:2;flex:none}
-.tag-logo img{width:auto;height:100%;max-width:70mm;object-fit:contain;display:block}
-.tag-logo span{font-family:var(--head);font-weight:700;font-size:14mm;color:var(--tc,#6b4630)}
+.tag-logo{width:auto;max-width:35mm;height:16mm;margin-top:18mm;display:grid;place-items:center;overflow:visible;position:relative;z-index:2;flex:none}
+.tag-logo img{width:auto;height:100%;max-width:35mm;object-fit:contain;display:block}
+.tag-logo span{font-family:var(--head);font-weight:700;font-size:9mm;color:var(--tc,#6b4630)}
 .tag-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:2mm 2mm 0}
 .tag-name{font-family:var(--head);font-weight:700;line-height:1.15;color:#2c1c12;white-space:nowrap;letter-spacing:-.2mm}
 .tag-name.ln{margin-top:2mm}
@@ -212,6 +212,8 @@ dialog::backdrop{background:rgba(59,37,25,.45);backdrop-filter:blur(2px)}
   body.printing .app-shell,body.printing #loginView,body.printing #publicView,body.printing #toast{display:none !important}
   body.printing #printRoot{display:block !important}
   .a4,.sheet{box-shadow:none;margin:0}
+  .a4{width:100%;height:100vh;max-width:none}
+  html,body{width:100%;margin:0;padding:0}
   .tag-in,.tag-in:before,.tag-base,.sheet th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
