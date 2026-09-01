@@ -11,6 +11,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root{
   --brown-900:#3b2519; --brown-800:#4e3324; --brown-700:#6b4630; --brown-600:#845a3d;
@@ -211,6 +212,38 @@ dialog::backdrop{background:rgba(59,37,25,.45);backdrop-filter:blur(2px)}
   font-family:var(--head);font-weight:500;font-size:5.2mm;line-height:1.3;margin-top:auto}
 .tag-base small{display:block;font-size:3.4mm;opacity:.85;font-weight:400;letter-spacing:.3mm}
 
+/* ---------- PRINT: certificates ---------- */
+.certpage{width:297mm;height:210mm;position:relative;background:#fff;overflow:hidden;page-break-after:always}
+.certpage .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.cert-in{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;align-items:center;
+  text-align:center;padding:10mm 8mm 15mm;box-sizing:border-box;color:#4a3520}
+.cert-logos{display:flex;align-items:center;justify-content:center;gap:8mm;margin-bottom:3.5mm}
+.cert-logos img{height:17mm;width:auto;max-width:60mm;object-fit:contain;display:block;background:transparent;border:0}
+.cert-school{font-family:var(--head);font-weight:700;font-size:8.6mm;line-height:1.15;color:#4a3520}
+.cert-lead{font-size:5.4mm;margin-top:1.5mm;color:#5f4630}
+.cert-name{font-family:var(--head);font-weight:700;font-size:11.5mm;color:#6b4a20;margin:4.5mm 0 3mm;line-height:1.15;white-space:nowrap}
+.cert-role{font-family:var(--head);font-weight:700;font-size:6mm;color:#8a5a20;line-height:1.3}
+.cert-proj{font-size:5mm;color:#5f4630;margin-top:1mm}
+.cert-bless{font-size:4.6mm;color:#5f4630;margin-top:2.5mm;line-height:1.4}
+.cert-date{font-size:4.6mm;color:#5f4630;margin-top:2.5mm}
+.cert-div{margin:2.5mm 0 auto;color:#b08b4a;letter-spacing:2px;font-size:3.8mm}
+.cert-signs{width:100%;margin-top:auto;padding-bottom:0;flex:none}
+.cert-row{display:flex;justify-content:center;gap:1mm;margin-top:7mm}
+.cert-signs .cert-row:first-child{transform:translateY(-5mm)}
+.cert-signs.few .cert-row:first-child{transform:none}
+.cert-row .sg{width:92mm;padding:0 .5mm;box-sizing:border-box}
+.cert-signs .sigbox{height:9mm;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;margin-bottom:.3mm}
+.cert-signs .sigbox img{max-height:9mm;max-width:52mm;width:auto;height:auto;object-fit:contain;display:block}
+.cert-signs.sig-on .cert-row{margin-top:2mm}
+.cert-signs.sig-on .cert-row:first-child{transform:translateY(-3mm)}
+.cert-signs.few .sigbox{height:13mm}
+.cert-signs.few .sigbox img{max-height:13mm}
+.cert-signs b{display:block;font-family:var(--head);font-weight:700;font-size:4.2mm;color:#4a3520;line-height:1.2}
+.cert-signs span{display:block;font-size:2.7mm;color:#5f4630;margin-top:.6mm;line-height:1.3;white-space:nowrap}
+.cert-signs.few .cert-row .sg{width:auto;min-width:62mm}
+.cert-signs.few b{font-size:5.4mm}
+.cert-signs.few span{font-size:4.6mm}
+
 /* ---------- PRINT: coupons ---------- */
 .cpage{width:210mm;height:297mm;padding:5mm;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(5,1fr);
   gap:0;page-break-after:always;background:#fff;box-sizing:border-box}
@@ -245,7 +278,9 @@ dialog::backdrop{background:rgba(59,37,25,.45);backdrop-filter:blur(2px)}
   body{background:#fff}
   body.printing .app-shell,body.printing #loginView,body.printing #publicView,body.printing #toast{display:none !important}
   body.printing #printRoot{display:block !important}
-  .a4,.sheet,.cpage{box-shadow:none;margin:0}
+  .a4,.sheet,.cpage,.certpage{box-shadow:none;margin:0}
+  .certpage,.certpage .bg,.cert-in{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .certpage:last-child{page-break-after:auto}
   .cpage{width:100%;height:100vh}
   .cp-in,.cp-in:before,.cp{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .a4{width:100%;height:100vh;max-width:none}
@@ -400,7 +435,7 @@ async function loadAll(){
   S.cfg = cf.exists ? cf.data() : {};
   if(!S.cfg.campName){
     S.cfg = {campName:'ค่ายวรรณธารกระดุมทอง', project:'โครงการพัฒนาทักษะการอ่าน การเขียน "วรรณธารกระดุมทอง"',
-      school:'', eventDate:'', password:'wannatharn', logo:'', openChoice:true, openEval:true, openBoard:true, schoolLogo:'https://nonthaphathr.github.io/uploadimg/logoschool.png', signName:'', foodVal:30, drinkVal:10, autoCreate:true, autoPlace:true, ...S.cfg};
+      school:'', eventDate:'', password:'wannatharn', logo:'', openChoice:true, openEval:true, openBoard:true, schoolLogo:'https://nonthaphathr.github.io/uploadimg/logoschool.png', signName:'', foodVal:30, drinkVal:10, extraLogo:'', bgSpeaker:'', bgStudent:'', dirName:'นางสุนิสา ใจใหญ่', dirTitle:'ผู้อำนวยการโรงเรียนกระดุมทองวิทยา', certDate:'', autoCreate:true, autoPlace:true, ...S.cfg};
     await C.settings.doc('main').set(S.cfg,{merge:true});
   }
   if(S.bases.length===0) await seedDefaults();
@@ -426,7 +461,7 @@ function applyBranding(){
 
 /* ================= ROUTER ================= */
 const TABS=[['dash','ภาพรวม'],['parts','ผู้เข้าร่วม'],['speakers','วิทยากร'],['bases','ฐานกิจกรรม'],
-            ['forms','ฟอร์ม & ลิงก์'],['results','ผลตอบแบบสอบถาม'],['board','กระดานข้อความ'],['tags','พิมพ์ป้ายชื่อ'],['coupons','คูปองอาหาร'],['roster','พิมพ์ใบรายชื่อ'],['settings','ตั้งค่า']];
+            ['forms','ฟอร์ม & ลิงก์'],['results','ผลตอบแบบสอบถาม'],['board','กระดานข้อความ'],['tags','พิมพ์ป้ายชื่อ'],['coupons','คูปองอาหาร'],['certs','เกียรติบัตร'],['roster','พิมพ์ใบรายชื่อ'],['settings','ตั้งค่า']];
 function renderNav(){
   $('#nav').innerHTML = TABS.map(([k,l])=>'<button class="'+(TAB===k?'on':'')+'" onclick="go(\''+k+'\')">'+l+'</button>').join('');
 }
@@ -434,7 +469,7 @@ function go(k){TAB=k;renderNav();render();window.scrollTo({top:0,behavior:'smoot
 function render(){
   const v=$('#view');
   ({dash:vDash,parts:vParts,speakers:vSpeakers,bases:vBases,forms:vForms,results:vResults,
-    board:vBoard,coupons:vCoupons,tags:vTags,roster:vRoster,settings:vSettings}[TAB]||vDash)(v);
+    board:vBoard,coupons:vCoupons,certs:vCerts,tags:vTags,roster:vRoster,settings:vSettings}[TAB]||vDash)(v);
 }
 
 /* ================= 1. DASHBOARD ================= */
@@ -461,7 +496,10 @@ function vDash(v){
   <div class="stats">
     <div class="stat"><div class="k">นักเรียนผู้เข้าร่วม</div><div class="v">${total}</div><div class="s">จัดฐานแล้ว ${assigned} คน</div></div>
     <div class="stat"><div class="k">วิทยากร</div><div class="v">${S.speakers.length}</div><div class="s">${S.bases.length} ฐานกิจกรรม</div></div>
-    <div class="stat"><div class="k">ตอบแบบสำรวจความต้องการ</div><div class="v">${S.choices.length}</div><div class="s">${total?Math.round(S.choices.length/total*100):0}% ของผู้เข้าร่วม</div></div>
+    ${(()=>{const uniq=new Set(S.choices.map(c=>normN(splitName(c.name).fn+splitName(c.name).ln))).size,
+      dup=S.choices.length-uniq;
+      return `<div class="stat"><div class="k">ตอบแบบสำรวจความต้องการ</div><div class="v">${uniq}</div>
+        <div class="s">${total?Math.min(100,Math.round(uniq/total*100)):0}% ของผู้เข้าร่วม${dup?(' · ตอบซ้ำ '+dup+' รายการ'):''}</div></div>`;})()}
     <div class="stat"><div class="k">ความพึงพอใจเฉลี่ย</div><div class="v">${evAvg?evAvg.toFixed(2):'–'}</div><div class="s">จาก ${S.evals.length} ผู้ตอบ (เต็ม 5)</div></div>
   </div>
 
@@ -936,6 +974,12 @@ function vRoster(v){
     <label class="chk" style="margin-bottom:16px"><input type="checkbox" id="ro_base" checked> แสดงคอลัมน์ฐานกิจกรรม</label>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" onclick="printRoster()">🖨 สั่งพิมพ์ใบรายชื่อ</button>
+      <select class="inp" id="ro_docmode" style="max-width:230px">
+        <option value="single">.docx — ตารางเดียวรวมทุกคน</option>
+        <option value="base">.docx — แยกตารางตามฐาน</option>
+        <option value="level">.docx — แยกตารางตามระดับชั้น</option>
+      </select>
+      <button class="btn ghost" onclick="exportRosterDocx()">⤓ ส่งออก .docx</button>
       <button class="btn ghost" onclick="exportParts()">⤓ Export .xlsx</button>
     </div>
   </div>`;
@@ -974,6 +1018,290 @@ function printRoster(){
   });
   doPrint(html);
 }
+/* ================= เกียรติบัตร ================= */
+const TH_DIGIT='๐๑๒๓๔๕๖๗๘๙';
+const TH_MONTH=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+function thNum(n){return String(n).replace(/[0-9]/g,d=>TH_DIGIT[+d]);}
+function certDateText(){
+  const raw=(S.cfg.certDate||'').trim();
+  if(raw && !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;      // พิมพ์เป็นข้อความเองได้
+  const d=raw?new Date(raw):new Date();
+  return 'ให้ไว้ ณ วันที่ '+thNum(d.getDate())+' '+TH_MONTH[d.getMonth()]+' พุทธศักราช '+thNum(d.getFullYear()+543);
+}
+function baseOrder(name){const b=S.bases.find(x=>x.name===name);return b&&b.order?b.order:0;}
+function speakerOfBase(name){const sp=S.speakers.find(x=>x.base===name);return sp?sp.name:'';}
+/* คณะผู้ลงนามเกียรติบัตรเข้าร่วม (วิทยากร 4 ฐาน + ผู้จัด) */
+const CERT_SIGNS=[
+  {n:'นายไชยา วรรณศรี',      t:'ศิลปินมรดกอีสาน ปี ๒๕๖๗'},
+  {n:'นายสุขภชัย เฉลิม',      t:'กวีรางวัลชนะเลิศพานแว่นฟ้า ๒๕๖๙'},
+  {n:'นายอรรณพ วันศรี',      t:'กวีมืออาชีพ'},
+  {n:'นายรณชัย หวังกวดกลาง', t:'นักอ่านทำนองเสนาะรางวัลสมาคมครูภาษาไทยแห่งประเทศไทย'},
+  {n:'นายนนทพัทธ์ หิรัญเรือง', t:'นักกลอนดีเด่นของสมาคมนักกลอนแห่งประเทศไทย ประจำปี ๒๕๖๗'}
+];
+let ceSel={mode:'student',kind:'join',base:'',ids:null,useSig:false};
+function certLogos(){
+  const a=S.cfg.logo?`<img src="${S.cfg.logo}" alt="">`:'';
+  const b=`<img src="${schoolLogo()}" alt="">`;
+  const c=S.cfg.extraLogo?`<img src="${S.cfg.extraLogo}" alt="">`:'';
+  return `<div class="cert-logos">${b}${a}${c}</div>`;
+}
+function certHTML(o){   // {name, role, signs:[{n,t}], bg}
+  const bg=o.bg?`<img class="bg" src="${o.bg}" alt="">`:'';
+  return `<div class="certpage">${bg}<div class="cert-in">
+    ${certLogos()}
+    <div class="cert-school">${esc(S.cfg.school||'โรงเรียนกระดุมทองวิทยา')}</div>
+    <div class="cert-lead">ขอมอบเกียรติบัตรฉบับนี้เพื่อแสดงว่า</div>
+    <div class="cert-name">${esc(o.name)}</div>
+    <div class="cert-role">${esc(o.role)}</div>
+    <div class="cert-proj">ในโครงการพัฒนาทักษะการอ่าน การเขียน "วรรณธารกระดุมทอง"</div>
+    <div class="cert-bless">ขออำนวยพรให้ประสบความสุข ความเจริญก้าวหน้า<br>และสืบสานงานวรรณกรรมไทยตลอดไป</div>
+    <div class="cert-date">${esc(certDateText())}</div>
+    <div class="cert-div">✦✦✦✦✦✦✦ ❁ ✦✦✦✦✦✦✦</div>
+    ${signBlock(o.signs)}
+  </div></div>`;
+}
+function sigKey(name){return 'sig_'+String(name||'').replace(/[^\u0E00-\u0E7Fa-zA-Z0-9]/g,'');}
+function sigImgOf(name){const k=sigKey(name);return (S.cfg[k]||'');}
+function signBlock(signs){
+  const list=signs.filter(x=>x&&x.n);
+  const cell=x=>{const im=ceSel.useSig?sigImgOf(x.n):'';
+    // กล่องลายเซ็นสูงคงที่ทุกใบ เพื่อให้ชื่อทุกคนอยู่ระดับเดียวกันเสมอ
+    const box=ceSel.useSig?`<div class="sigbox">${im?`<img src="${im}" alt="">`:''}</div>`:'';
+    return `<div class="sg">${box}<b>(${esc(x.n)})</b><span>${esc(x.t||'')}</span></div>`;};
+  const row=arr=>arr.length?`<div class="cert-row">${arr.map(cell).join('')}</div>`:'';
+  let rows;
+  if(list.length>=5) rows=[list.slice(0,1), list.slice(1,4), list.slice(4)];   // 1 / 3 / 2 สับหว่าง
+  else if(list.length===4) rows=[list.slice(0,2), list.slice(2)];
+  else rows=[list];
+  return `<div class="cert-signs${list.length<=3?' few':''}${ceSel.useSig?' sig-on':''}">${rows.map(row).join('')}</div>`;
+}
+function certTargets(){
+  if(ceSel.mode==='speaker') return S.speakers.slice();
+  return S.parts.filter(p=>!ceSel.base||p.base===ceSel.base)
+    .filter(p=>!ceSel.ids||ceSel.ids.includes(p.id));
+}
+function certOne(x){
+  const dir={n:S.cfg.dirName||'',t:S.cfg.dirTitle||''};
+  if(ceSel.mode==='speaker'){
+    return certHTML({name:x.name,role:'เป็นวิทยากร'+(x.base||''),bg:S.cfg.bgSpeaker,signs:[dir]});
+  }
+  const ord=baseOrder(x.base), sp=speakerOfBase(x.base);
+  const role = ceSel.kind==='award'
+    ? 'ได้รับรางวัลผลงานดีเด่นประจำ'+(x.base||'ฐานกิจกรรม')
+    : 'ผ่านการอบรมใน'+(ord?('ฐานที่ '+thNum(ord)+' – '):'')+(x.base||'ฐานกิจกรรม').replace(/^ฐาน/,'ฐาน');
+  const signs = ceSel.kind==='award'
+    ? [dir, sp?{n:sp,t:'วิทยากร'+(x.base||'')}:{n:''}]
+    : [dir].concat(CERT_SIGNS);
+  return certHTML({name:fullName(x),role:role,bg:S.cfg.bgStudent,signs:signs});
+}
+function vCerts(v){
+  const list=certTargets();
+  v.innerHTML=`
+  <div class="page-head"><div><h2>สร้างเกียรติบัตร</h2>
+    <p>A4 แนวนอน · ใช้พื้นหลังที่อัปโหลดไว้ในเมนูตั้งค่า (แยกโหมดวิทยากร / นักเรียน)</p></div></div>
+  <div class="toolbar">
+    <select class="inp" style="max-width:230px" onchange="ceSel.mode=this.value;ceSel.ids=null;render()">
+      <option value="student" ${ceSel.mode==='student'?'selected':''}>โหมดนักเรียนผู้เข้าร่วม</option>
+      <option value="speaker" ${ceSel.mode==='speaker'?'selected':''}>โหมดวิทยากร</option>
+    </select>
+    ${ceSel.mode==='student'?`
+    <select class="inp" style="max-width:250px" onchange="ceSel.kind=this.value;render()">
+      <option value="join" ${ceSel.kind==='join'?'selected':''}>เกียรติบัตรเข้าร่วมอบรม</option>
+      <option value="award" ${ceSel.kind==='award'?'selected':''}>เกียรติบัตรผลงานดีเด่นประจำฐาน</option>
+    </select>
+    <select class="inp" style="max-width:230px" onchange="ceSel.base=this.value;ceSel.ids=null;render()">
+      <option value="">— ทุกฐาน —</option>
+      ${S.bases.map(b=>`<option ${ceSel.base===b.name?'selected':''}>${esc(b.name)}</option>`).join('')}
+    </select>`:''}
+    <span style="color:var(--muted);font-size:13.5px">จะพิมพ์ <b>${list.length}</b> ใบ</span>
+    <label class="chk"><input type="checkbox" ${ceSel.useSig?'checked':''} onchange="ceSel.useSig=this.checked;render()">
+      ใช้ลายเซ็นสแกน</label>
+    <div class="spacer"></div>
+    <button class="btn ghost sm" onclick="exportMcScript()">⤓ สคริปต์พิธีกร (.docx)</button>
+    ${ceSel.mode==='student'?`<button class="btn ghost sm" onclick="ceAll(true)">เลือกทั้งหมด</button>
+    <button class="btn ghost sm" onclick="ceAll(false)">ล้างการเลือก</button>`:''}
+    <button class="btn sm" onclick="printCerts()">🖨 พิมพ์เกียรติบัตร</button>
+  </div>
+  ${(ceSel.mode==='speaker'?!S.cfg.bgSpeaker:!S.cfg.bgStudent)?
+    '<div class="card card-pad" style="margin-bottom:14px;border-color:#e8c6c1"><b style="color:var(--bad)">ยังไม่ได้อัปโหลดพื้นหลังของโหมดนี้</b> — ไปที่เมนูตั้งค่า → พื้นหลังเกียรติบัตร (พิมพ์ได้แต่จะเป็นพื้นขาวเปล่า)</div>':''}
+  ${list.length?`<div class="tw"><table><thead><tr>
+    ${ceSel.mode==='student'?'<th style="width:44px"></th>':''}<th class="num">#</th><th>ชื่อ–สกุล</th><th>${ceSel.mode==='speaker'?'ฐานที่รับผิดชอบ':'ฐานกิจกรรม'}</th></tr></thead><tbody>
+    ${list.map((x,i)=>`<tr>
+      ${ceSel.mode==='student'?`<td><input type="checkbox" class="cechk" value="${x.id}" ${!ceSel.ids||ceSel.ids.includes(x.id)?'checked':''} onchange="onCeChk()" style="width:17px;height:17px;accent-color:var(--brown-700)"></td>`:''}
+      <td class="num">${i+1}</td><td>${esc(ceSel.mode==='speaker'?x.name:fullName(x))}</td>
+      <td>${esc(x.base||'—')}</td></tr>`).join('')}
+  </tbody></table></div>`:'<div class="card"><div class="empty"><div class="big">🎖</div>ยังไม่มีรายชื่อสำหรับออกเกียรติบัตร</div></div>'}
+  <div class="card card-pad" style="margin-top:16px">
+    <h3 style="font-size:15px;margin-bottom:10px">ตัวอย่าง (ย่อขนาด)</h3>
+    <div style="width:297mm;height:210mm;transform:scale(.42);transform-origin:top left;margin-bottom:-118mm;
+      border:1px solid var(--line);border-radius:8px;overflow:hidden">
+      ${list.length?certOne(list[0]):certHTML({name:'ชื่อ–สกุลผู้รับ',role:'ตัวอย่างข้อความเกียรติบัตร',
+        bg:ceSel.mode==='speaker'?S.cfg.bgSpeaker:S.cfg.bgStudent,signs:[{n:S.cfg.dirName||'',t:S.cfg.dirTitle||''}]})}
+    </div>
+  </div>`;
+}
+function ceAll(on){
+  const ids=certTargets().map(x=>x.id);
+  ceSel.ids = on? null : [];
+  document.querySelectorAll('.cechk').forEach(c=>c.checked=on);
+  if(on) ceSel.ids=null; else ceSel.ids=[];
+  render();
+}
+function onCeChk(){
+  ceSel.ids=[...document.querySelectorAll('.cechk')].filter(c=>c.checked).map(c=>c.value);
+}
+async function makeDocx(bodyXml,fname,landscape){
+  if(typeof JSZip==='undefined') return toast('โหลดไลบรารีสร้างไฟล์ไม่สำเร็จ (ต้องต่ออินเทอร์เน็ต)');
+  const sect = landscape
+    ? '<w:sectPr><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134"/></w:sectPr>'
+    : '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1418"/></w:sectPr>';
+  const doc=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+${bodyXml}${sect}</w:body></w:document>`;
+  const zip=new JSZip();
+  zip.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`);
+  zip.folder('_rels').file('.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+  zip.folder('word').file('document.xml',doc);
+  const blob=await zip.generateAsync({type:'blob',
+    mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  toast('ส่งออกไฟล์ Word แล้ว');
+}
+function wP(t,o){o=o||{};
+  const sz=o.sz||24, b=o.b?'<w:b/>':'', jc=o.jc?`<w:jc w:val="${o.jc}"/>`:'';
+  return `<w:p><w:pPr>${jc}<w:spacing w:after="${o.after==null?100:o.after}"/></w:pPr>`+
+    `<w:r><w:rPr>${b}<w:rFonts w:ascii="TH SarabunPSK" w:hAnsi="TH SarabunPSK" w:cs="TH SarabunPSK"/>`+
+    `<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr><w:t xml:space="preserve">${xmlEsc(t)}</w:t></w:r></w:p>`;
+}
+function wCell(t,o){o=o||{};
+  return `<w:tc><w:tcPr><w:tcW w:w="${o.w||2000}" w:type="dxa"/>${o.shd?'<w:shd w:val="clear" w:fill="EFE4D8"/>':''}</w:tcPr>`+
+    wP(t,{sz:o.sz||22,b:o.b,jc:o.jc,after:0})+`</w:tc>`;
+}
+async function exportRosterDocx(){
+  const mode=val('ro_docmode')||'single', title=val('ro_title'), sign=$('#ro_sign').checked, showBase=$('#ro_base').checked;
+  const signer=(val('ro_signer')||'').trim();
+  if(!S.parts.length) return toast('ยังไม่มีข้อมูลนักเรียน');
+  let groups=[];
+  if(mode==='base') groups=S.bases.map(b=>({t:b.name,rows:S.parts.filter(p=>p.base===b.name)}))
+    .concat([{t:'ยังไม่จัดฐาน',rows:S.parts.filter(p=>!p.base)}]).filter(g=>g.rows.length);
+  else if(mode==='level') groups=LEVELS.map(l=>({t:'ระดับชั้น '+l,rows:S.parts.filter(p=>p.level===l)})).filter(g=>g.rows.length);
+  else groups=[{t:'',rows:S.parts.slice()}];
+  const head=[S.cfg.school,S.cfg.project,S.cfg.eventDate].filter(Boolean);
+  let xml='';
+  groups.forEach((g,gi)=>{
+    const rows=g.rows.slice().sort((a,b)=>(a.level||'').localeCompare(b.level||'')||sortTH(a.fname||'',b.fname||''));
+    if(gi) xml+='<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+    xml+=wP(title,{sz:36,b:1,jc:'center',after:60});
+    head.forEach(h=>xml+=wP(h,{sz:26,jc:'center',after:40}));
+    if(g.t) xml+=wP(g.t,{sz:28,b:1,jc:'center',after:120});
+    const w=showBase?(sign?[700,3600,1200,2400,2400]:[900,4800,1600,3000]):(sign?[900,4200,1400,3800]:[1000,5600,1800]);
+    const hd=['ที่','ชื่อ–สกุล','ชั้น/ห้อง'].concat(showBase?['ฐานกิจกรรม']:[]).concat(sign?['ลายมือชื่อ']:[]);
+    let tbl='<w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="0" w:type="auto"/>'+
+      '<w:tblBorders><w:top w:val="single" w:sz="6" w:color="999999"/><w:left w:val="single" w:sz="6" w:color="999999"/>'+
+      '<w:bottom w:val="single" w:sz="6" w:color="999999"/><w:right w:val="single" w:sz="6" w:color="999999"/>'+
+      '<w:insideH w:val="single" w:sz="6" w:color="999999"/><w:insideV w:val="single" w:sz="6" w:color="999999"/></w:tblBorders></w:tblPr>';
+    tbl+='<w:tr><w:trPr><w:tblHeader/></w:trPr>'+hd.map((h,i)=>wCell(h,{w:w[i],b:1,jc:'center',shd:1})).join('')+'</w:tr>';
+    rows.forEach((p,i)=>{
+      const cells=[wCell(String(i+1),{w:w[0],jc:'center'}), wCell(fullName(p),{w:w[1]}),
+        wCell((p.level||'')+(p.room?'/'+p.room:''),{w:w[2],jc:'center'})];
+      let k=3;
+      if(showBase){cells.push(wCell(p.base?baseShort(p.base):'-',{w:w[k]}));k++;}
+      if(sign) cells.push(wCell(' ',{w:w[k]}));
+      tbl+='<w:tr>'+cells.join('')+'</w:tr>';
+    });
+    tbl+='</w:tbl>';
+    xml+=tbl;
+    xml+=wP('รวม '+rows.length+' คน',{sz:24,jc:'right',after:400});
+    xml+=wP('ลงชื่อ ................................................ ผู้ควบคุม',{sz:24,jc:'center',after:40});
+    xml+=wP('('+(signer||'................................................')+')',{sz:24,jc:'center'});
+  });
+  await makeDocx(xml,'ใบรายชื่อผู้เข้าร่วมโครงการ.docx',false);
+}
+function mcLines(){
+  const list=certTargets();
+  const L=[];
+  L.push({h:1,t:'สคริปต์พิธีกร – พิธีมอบเกียรติบัตร'});
+  L.push({t:(S.cfg.campName||'ค่ายวรรณธารกระดุมทอง')+'  '+[S.cfg.school,S.cfg.eventDate].filter(Boolean).join(' · ')});
+  L.push({t:''});
+  L.push({t:'เรียนท่านผู้อำนวยการ คณะครู วิทยากร และนักเรียนผู้เข้าร่วมโครงการทุกท่าน บัดนี้ได้เวลาอันสมควรแล้ว '+
+    'ขอเรียนเชิญ '+(S.cfg.dirName||'ท่านประธานในพิธี')+' '+(S.cfg.dirTitle||'')+' ให้เกียรติมอบเกียรติบัตรแก่ผู้เข้าร่วมโครงการ ขอเรียนเชิญครับ/ค่ะ'});
+  L.push({t:''});
+  if(ceSel.mode==='speaker'){
+    L.push({h:2,t:'ลำดับการมอบเกียรติบัตรวิทยากร'});
+    list.forEach((x,i)=>L.push({t:'๑.'.slice(0,0)+(i+1)+'. ขอเรียนเชิญ '+x.name+' วิทยากร'+(x.base||'')+' เข้ารับเกียรติบัตร'}));
+  }else{
+    const kindTxt = ceSel.kind==='award' ? 'ผู้มีผลงานดีเด่นประจำฐาน' : 'ผู้ผ่านการอบรม';
+    const byBase={};
+    list.forEach(p=>{const b=p.base||'ยังไม่จัดฐาน'; (byBase[b]=byBase[b]||[]).push(p);});
+    Object.keys(byBase).forEach(b=>{
+      const ord=baseOrder(b);
+      L.push({h:2,t:(ord?('ฐานที่ '+thNum(ord)+' – '):'')+b+'  ('+kindTxt+' '+byBase[b].length+' คน)'});
+      L.push({t:'พิธีกร: ลำดับต่อไป ขอเรียนเชิญ'+kindTxt+' '+b+' เข้ารับเกียรติบัตร ดังรายนามต่อไปนี้'});
+      byBase[b].forEach((p,i)=>L.push({t:(i+1)+'. '+fullName(p)+'   '+(p.level||'')+(p.room?'/'+p.room:'')}));
+      L.push({t:''});
+    });
+  }
+  L.push({t:''});
+  L.push({t:'พิธีกร: ขอกราบขอบพระคุณท่านประธานในพิธีเป็นอย่างสูง และขอแสดงความยินดีกับผู้เข้ารับเกียรติบัตรทุกท่าน '+
+    'ขอเรียนเชิญทุกท่านถ่ายภาพร่วมกันเป็นที่ระลึก'});
+  return L;
+}
+function xmlEsc(t){return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+async function exportMcScript(){
+  if(typeof JSZip==='undefined') return toast('โหลดไลบรารีสร้างไฟล์ไม่สำเร็จ (ต้องต่ออินเทอร์เน็ต)');
+  const L=mcLines();
+  const para=x=>{
+    const sz = x.h===1?36 : x.h===2?28 : 24;   // half-points
+    const b  = x.h?'<w:b/>':'';
+    const jc = x.h===1?'<w:jc w:val="center"/>':'';
+    return `<w:p><w:pPr>${jc}<w:spacing w:after="120"/></w:pPr>`+
+      `<w:r><w:rPr>${b}<w:rFonts w:ascii="TH SarabunPSK" w:hAnsi="TH SarabunPSK" w:cs="TH SarabunPSK"/>`+
+      `<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr><w:t xml:space="preserve">${xmlEsc(x.t)}</w:t></w:r></w:p>`;
+  };
+  const doc=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+${L.map(para).join('')}
+<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1418"/></w:sectPr>
+</w:body></w:document>`;
+  const zip=new JSZip();
+  zip.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`);
+  zip.folder('_rels').file('.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+  zip.folder('word').file('document.xml',doc);
+  const blob=await zip.generateAsync({type:'blob',
+    mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='สคริปต์พิธีกร-มอบเกียรติบัตร.docx';
+  a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  toast('ส่งออกสคริปต์พิธีกรแล้ว');
+}
+function printCerts(){
+  const list=certTargets();
+  if(!list.length) return toast('ยังไม่มีรายชื่อสำหรับพิมพ์');
+  const st=document.createElement('style');
+  st.id='landStyle'; st.textContent='@page{size:A4 landscape;margin:0}';
+  document.head.appendChild(st);
+  doPrint(list.map(certOne).join(''));
+  setTimeout(()=>{const e=$('#landStyle'); if(e) e.remove();},4000);
+}
+
 /* ================= คูปองอาหาร / เครื่องดื่ม ================= */
 const SCHOOL_LOGO_DEFAULT='https://nonthaphathr.github.io/uploadimg/logoschool.png';
 function schoolLogo(){return S.cfg.schoolLogo||SCHOOL_LOGO_DEFAULT;}
@@ -1083,6 +1411,45 @@ function vSettings(v){
       </div>
       <button class="btn ghost" onclick="saveCoupon()">บันทึกข้อมูลคูปอง</button>
       <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+      <h3 style="font-size:16px;margin-bottom:10px">โลโก้เพิ่มเติม (แสดงบนเกียรติบัตร)</h3>
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
+        ${c.extraLogo?`<img src="${c.extraLogo}" style="height:48px;width:auto;object-fit:contain">`:'<span style="font-size:12.5px;color:var(--muted)">ยังไม่มี</span>'}
+        ${c.extraLogo?'<button class="btn danger sm" onclick="setCfg(\'extraLogo\',\'\').then(reload)">ลบ</button>':''}
+      </div>
+      <input type="file" class="inp" accept="image/*" onchange="uploadImg(this,'extraLogo',512,900000,false)">
+      <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+      <h3 style="font-size:16px;margin-bottom:10px">เกียรติบัตร</h3>
+      <div class="row c2">
+        <div class="field"><label>ชื่อผู้ลงนาม (ผู้อำนวยการ)</label>
+          <input class="inp" id="s_dir" value="${esc(c.dirName||'')}"></div>
+        <div class="field"><label>ตำแหน่ง</label>
+          <input class="inp" id="s_dirt" value="${esc(c.dirTitle||'')}"></div>
+      </div>
+      <div class="field"><label>วันที่บนเกียรติบัตร</label>
+        <input class="inp" id="s_cdate" value="${esc(c.certDate||'')}" placeholder="เว้นว่าง = วันที่ปัจจุบัน · ใส่ YYYY-MM-DD หรือพิมพ์ข้อความเอง"></div>
+      <button class="btn ghost" onclick="saveCert()">บันทึกข้อมูลเกียรติบัตร</button>
+      <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+      <h3 style="font-size:16px;margin-bottom:6px">ลายเซ็นสแกน (โหมดลายเซ็น)</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">
+        อัปโหลดไฟล์ .png พื้นหลังโปร่งใสของแต่ละบุคคล — เปิด/ปิดการใช้งานได้ตอนสั่งพิมพ์ในเมนูเกียรติบัตร</p>
+      ${sigUploadRows(c)}
+      <div class="row c2" style="margin-top:16px">
+        <div>
+          <div style="font-size:13.5px;margin-bottom:6px"><b>พื้นหลังโหมดวิทยากร</b> (A4 แนวนอน)</div>
+          <div style="height:92px;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:grid;place-items:center;background:var(--brown-100)">
+            ${c.bgSpeaker?`<img src="${c.bgSpeaker}" style="width:100%;height:100%;object-fit:cover">`:'<span style="font-size:12px;color:var(--muted)">ยังไม่มี</span>'}</div>
+          <input type="file" class="inp" style="margin-top:8px" accept="image/*" onchange="uploadImg(this,'bgSpeaker',1600,2500000,true)">
+          ${c.bgSpeaker?'<button class="btn danger sm" style="margin-top:8px" onclick="setCfg(\'bgSpeaker\',\'\').then(reload)">ลบพื้นหลัง</button>':''}
+        </div>
+        <div>
+          <div style="font-size:13.5px;margin-bottom:6px"><b>พื้นหลังโหมดนักเรียน</b> (A4 แนวนอน)</div>
+          <div style="height:92px;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:grid;place-items:center;background:var(--brown-100)">
+            ${c.bgStudent?`<img src="${c.bgStudent}" style="width:100%;height:100%;object-fit:cover">`:'<span style="font-size:12px;color:var(--muted)">ยังไม่มี</span>'}</div>
+          <input type="file" class="inp" style="margin-top:8px" accept="image/*" onchange="uploadImg(this,'bgStudent',1600,2500000,true)">
+          ${c.bgStudent?'<button class="btn danger sm" style="margin-top:8px" onclick="setCfg(\'bgStudent\',\'\').then(reload)">ลบพื้นหลัง</button>':''}
+        </div>
+      </div>
+      <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
       <h3 style="font-size:16px;margin-bottom:10px">รหัสผ่านผู้ดูแล</h3>
       <div class="field"><input class="inp" id="s_pw" type="text" value="${esc(c.password||'wannatharn')}"></div>
       <button class="btn ghost" onclick="setCfg('password',val('s_pw')).then(()=>toast('เปลี่ยนรหัสผ่านแล้ว'))">เปลี่ยนรหัสผ่าน</button>
@@ -1141,6 +1508,29 @@ function vSettings(v){
     </div>
   </div>`;
 }
+function sigPersons(){
+  const out=[];
+  if(S.cfg.dirName) out.push({n:S.cfg.dirName,t:S.cfg.dirTitle||''});
+  CERT_SIGNS.forEach(x=>out.push(x));
+  S.speakers.forEach(sp=>{ if(!out.some(o=>o.n===sp.name)) out.push({n:sp.name,t:'วิทยากร'+(sp.base||'')}); });
+  return out;
+}
+function sigUploadRows(c){
+  return sigPersons().map(x=>{const k=sigKey(x.n);
+    return `<div style="display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px;flex-wrap:wrap">
+      <div style="min-width:150px;font-size:13.5px"><b>${esc(x.n)}</b>
+        <div style="color:var(--muted);font-size:12px">${esc(x.t||'')}</div></div>
+      <div style="height:44px;min-width:90px;display:grid;place-items:center">
+        ${c[k]?`<img src="${c[k]}" style="height:44px;width:auto;object-fit:contain">`:'<span style="font-size:12px;color:var(--muted)">ยังไม่มี</span>'}</div>
+      <input type="file" class="inp" style="max-width:230px" accept="image/png,image/*"
+        onchange="uploadImg(this,'${k}',600,700000,false)">
+      ${c[k]?`<button class="btn danger sm" onclick="setCfg('${k}','').then(reload)">ลบ</button>`:''}
+    </div>`;}).join('');
+}
+async function saveCert(){
+  const d={dirName:val('s_dir').trim(),dirTitle:val('s_dirt').trim(),certDate:val('s_cdate').trim()};
+  await C.settings.doc('main').set(d,{merge:true}); Object.assign(S.cfg,d); toast('บันทึกข้อมูลเกียรติบัตรแล้ว');
+}
 async function saveCoupon(){
   const d={schoolLogo:val('s_slogo').trim()||SCHOOL_LOGO_DEFAULT, signName:val('s_sign').trim(),
     foodVal:+val('s_food')||30, drinkVal:+val('s_drink')||10};
@@ -1162,6 +1552,24 @@ function uploadLogo(inp){
       const data=cv.toDataURL('image/png');
       if(data.length>900000) return toast('ไฟล์ใหญ่เกินไป กรุณาใช้รูปที่เล็กลง');
       await setCfg('logo',data); await reload(); toast('อัปโหลดโลโก้แล้ว');
+    };
+    img.src=e.target.result;
+  };
+  r.readAsDataURL(f);
+}
+function uploadImg(inp,key,maxPx,maxBytes,asJpeg){
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const img=new Image();
+    img.onload=async()=>{
+      const m=maxPx||512, sc=Math.min(1,m/Math.max(img.width,img.height));
+      const cv=document.createElement('canvas'); cv.width=img.width*sc; cv.height=img.height*sc;
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      let data = asJpeg ? cv.toDataURL('image/jpeg',0.82) : cv.toDataURL('image/png');
+      if(data.length>(maxBytes||900000)) data=cv.toDataURL('image/jpeg',0.7);
+      if(data.length>(maxBytes||900000)) return toast('ไฟล์ใหญ่เกินไป กรุณาย่อรูปก่อนอัปโหลด');
+      await setCfg(key,data); await reload(); toast('อัปโหลดรูปแล้ว');
     };
     img.src=e.target.result;
   };
