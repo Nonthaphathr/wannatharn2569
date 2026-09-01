@@ -212,20 +212,20 @@ dialog::backdrop{background:rgba(59,37,25,.45);backdrop-filter:blur(2px)}
 .tag-base small{display:block;font-size:3.4mm;opacity:.85;font-weight:400;letter-spacing:.3mm}
 
 /* ---------- PRINT: coupons ---------- */
-.cpage{width:210mm;height:297mm;padding:6mm;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+.cpage{width:210mm;height:297mm;padding:5mm;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(5,1fr);
   gap:0;page-break-after:always;background:#fff;box-sizing:border-box}
 .cp{padding:1.2mm;box-sizing:border-box;display:flex;outline:.2mm dashed #b9a893;outline-offset:-.1mm}
-.cp-in{flex:1;border:.9mm double var(--cc,#6b4630);border-radius:3mm;display:flex;flex-direction:column;
-  align-items:center;justify-content:space-between;text-align:center;padding:3mm 2.5mm;position:relative;background:#fff;overflow:hidden}
-.cp-in:before{content:"";position:absolute;inset:1.6mm;border:.25mm solid var(--cc,#6b4630);border-radius:2mm;opacity:.45;pointer-events:none}
-.cp-logos{display:flex;align-items:center;justify-content:center;gap:3mm;position:relative;z-index:2}
-.cp-logos img{height:11mm;width:auto;max-width:26mm;object-fit:contain;display:block}
-.cp-kind{font-family:var(--head);font-weight:700;font-size:5mm;color:var(--cc,#6b4630);line-height:1.2;position:relative;z-index:2}
-.cp-val{font-family:var(--head);font-weight:700;font-size:7.5mm;color:var(--cc,#6b4630);line-height:1;position:relative;z-index:2}
-.cp-val small{display:block;font-size:3mm;font-weight:400;color:#7a6553;letter-spacing:.3mm;margin-top:.8mm}
-.cp-camp{font-size:2.9mm;color:#7a6553;position:relative;z-index:2}
-.cp-sign{width:100%;font-size:2.8mm;color:#5a4335;position:relative;z-index:2}
-.cp-sign .ln{display:block;border-bottom:.2mm dotted #8a725e;height:5mm;margin:0 4mm 1mm}
+.cp-in{flex:1;border:.8mm double var(--cc,#6b4630);border-radius:2.5mm;display:flex;flex-direction:column;
+  align-items:center;justify-content:space-between;text-align:center;padding:2.2mm 1.8mm;position:relative;background:#fff;overflow:hidden}
+.cp-in:before{content:"";position:absolute;inset:1.2mm;border:.25mm solid var(--cc,#6b4630);border-radius:2mm;opacity:.45;pointer-events:none}
+.cp-logos{display:flex;align-items:center;justify-content:center;gap:2mm;position:relative;z-index:2}
+.cp-logos img{height:8mm;width:auto;max-width:20mm;object-fit:contain;display:block}
+.cp-kind{font-family:var(--head);font-weight:700;font-size:4mm;color:var(--cc,#6b4630);line-height:1.2;position:relative;z-index:2}
+.cp-val{font-family:var(--head);font-weight:700;font-size:6mm;color:var(--cc,#6b4630);line-height:1;position:relative;z-index:2}
+.cp-val small{display:block;font-size:2.5mm;font-weight:400;color:#7a6553;letter-spacing:.3mm;margin-top:.8mm}
+.cp-camp{font-size:2.5mm;color:#7a6553;position:relative;z-index:2}
+.cp-sign{width:100%;font-size:2.4mm;color:#5a4335;position:relative;z-index:2}
+.cp-sign .ln{display:block;border-bottom:.2mm dotted #8a725e;height:4mm;margin:0 2.5mm .8mm}
 
 /* ---------- PRINT: roster ---------- */
 .sheet{width:210mm;min-height:297mm;padding:15mm 14mm;background:#fff;page-break-after:always}
@@ -235,6 +235,11 @@ dialog::backdrop{background:rgba(59,37,25,.45);backdrop-filter:blur(2px)}
 .sheet th,.sheet td{border:.3mm solid #999;padding:2mm 3mm}
 .sheet th{background:#efe4d8 !important;-webkit-print-color-adjust:exact}
 .sheet .sign{width:45mm}
+.sheet table{width:100%;border-collapse:collapse;table-layout:fixed}
+.sheet thead{display:table-header-group}
+.sheet tr{break-inside:avoid;page-break-inside:avoid}
+.sheet:last-child{page-break-after:auto}
+.sheet .ft{display:flex;justify-content:space-between;align-items:flex-end;margin-top:6mm;font-size:11pt;color:#444}
 @media print{
   @page{size:A4;margin:0}
   body{background:#fff}
@@ -917,6 +922,16 @@ function vRoster(v){
       </select></div>
       <div class="field"><label>หัวเรื่องเอกสาร</label><input class="inp" id="ro_title" value="ใบลงทะเบียนผู้เข้าร่วมโครงการ"></div>
     </div>
+    <div class="row c2">
+      <div class="field"><label>จำนวนรายชื่อต่อหน้า</label>
+        <select class="inp" id="ro_per">
+          <option value="20">20 คน/หน้า (โปร่ง อ่านง่าย)</option>
+          <option value="22" selected>22 คน/หน้า (แนะนำ)</option>
+          <option value="25">25 คน/หน้า (แน่น)</option>
+        </select></div>
+      <div class="field"><label>ผู้ลงนามท้ายเอกสาร</label>
+        <input class="inp" id="ro_signer" value="${esc(S.cfg.signName||'')}" placeholder="เว้นว่าง = เส้นประให้เซ็นเอง"></div>
+    </div>
     <label class="chk" style="margin-bottom:8px"><input type="checkbox" id="ro_sign" checked> มีช่องลงลายมือชื่อ</label>
     <label class="chk" style="margin-bottom:16px"><input type="checkbox" id="ro_base" checked> แสดงคอลัมน์ฐานกิจกรรม</label>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -927,6 +942,7 @@ function vRoster(v){
 }
 function printRoster(){
   const mode=val('ro_mode'), title=val('ro_title'), sign=$('#ro_sign').checked, showBase=$('#ro_base').checked;
+  const per=Math.max(10,+val('ro_per')||22), signer=(val('ro_signer')||'').trim();
   if(!S.parts.length) return toast('ยังไม่มีข้อมูลนักเรียน');
   let groups=[];
   if(mode==='base') groups=S.bases.map(b=>({t:b.name,rows:S.parts.filter(p=>p.base===b.name)}))
@@ -934,21 +950,28 @@ function printRoster(){
   else if(mode==='level') groups=LEVELS.map(l=>({t:'ระดับชั้น '+l,rows:S.parts.filter(p=>p.level===l)})).filter(g=>g.rows.length);
   else groups=[{t:'',rows:S.parts.slice()}];
   const head=[S.cfg.school,S.cfg.project,S.cfg.eventDate].filter(Boolean).join('<br>');
-  const html=groups.map(g=>{
+  let html='';
+  groups.forEach(g=>{
     const rows=g.rows.slice().sort((a,b)=>(a.level||'').localeCompare(b.level||'')||sortTH(a.fname||'',b.fname||''));
-    return `<div class="sheet"><h1>${esc(title)}</h1>
-      <div class="sub">${head}${g.t?'<br><b>'+esc(g.t)+'</b>':''}</div>
-      <table><thead><tr><th style="width:14mm">ที่</th><th>ชื่อ–สกุล</th><th style="width:22mm">ชั้น/ห้อง</th>
-      ${showBase?'<th style="width:45mm">ฐานกิจกรรม</th>':''}${sign?'<th class="sign">ลายมือชื่อ</th>':''}</tr></thead><tbody>
-      ${rows.map((p,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(fullName(p))}</td>
-        <td style="text-align:center">${esc(p.level||'')}${p.room?'/'+esc(p.room):''}</td>
-        ${showBase?`<td>${esc(p.base?baseShort(p.base):'-')}</td>`:''}${sign?'<td></td>':''}</tr>`).join('')}
-      </tbody></table>
-      <div style="margin-top:10mm;text-align:right;font-size:11pt">รวม ${rows.length} คน</div>
-      <div style="margin-top:18mm;text-align:center;font-size:11pt">
-        ลงชื่อ ................................................ ผู้ควบคุม<br>(................................................)</div>
-    </div>`;
-  }).join('');
+    const pages=Math.max(1,Math.ceil(rows.length/per));
+    for(let pg=0; pg<pages; pg++){
+      const part=rows.slice(pg*per,(pg+1)*per), last=(pg===pages-1);
+      html+=`<div class="sheet"><h1>${esc(title)}</h1>
+        <div class="sub">${head}${g.t?'<br><b>'+esc(g.t)+'</b>':''}</div>
+        <table><thead><tr><th style="width:14mm">ที่</th><th>ชื่อ–สกุล</th><th style="width:22mm">ชั้น/ห้อง</th>
+        ${showBase?'<th style="width:45mm">ฐานกิจกรรม</th>':''}${sign?'<th class="sign">ลายมือชื่อ</th>':''}</tr></thead><tbody>
+        ${part.map((p2,i)=>`<tr><td style="text-align:center">${pg*per+i+1}</td><td>${esc(fullName(p2))}</td>
+          <td style="text-align:center">${esc(p2.level||'')}${p2.room?'/'+esc(p2.room):''}</td>
+          ${showBase?`<td>${esc(p2.base?baseShort(p2.base):'-')}</td>`:''}${sign?'<td></td>':''}</tr>`).join('')}
+        </tbody></table>
+        <div class="ft"><span>หน้า ${pg+1}/${pages}${g.t?' · '+esc(g.t):''}</span>
+          <span>${last?('รวม '+rows.length+' คน'):('ยกยอด '+((pg+1)*per)+' คน')}</span></div>
+        ${last?`<div style="margin-top:14mm;text-align:center;font-size:11pt">
+          ลงชื่อ ................................................ ผู้ควบคุม<br>
+          (${signer?esc(signer):'................................................'})</div>`:''}
+      </div>`;
+    }
+  });
   doPrint(html);
 }
 /* ================= คูปองอาหาร / เครื่องดื่ม ================= */
@@ -973,10 +996,10 @@ function vCoupons(v){
   const n=cpTargets().length + (+cpSel.extra||0);
   const food=couponHTML('คูปองอาหาร', S.cfg.foodVal||30, '#b0453a');
   const drink=couponHTML('คูปองเครื่องดื่ม', S.cfg.drinkVal||10, '#2f6f5e');
-  const sheets=Math.ceil(n/9)*2;
+  const sheets=Math.ceil(n/20)*2;
   v.innerHTML=`
   <div class="page-head"><div><h2>พิมพ์คูปองอาหาร &amp; เครื่องดื่ม</h2>
-    <p>จัดลง A4 แผ่นละ 9 ใบ (3×3) มีเส้นประสำหรับตัด · คนละ 2 ใบ (อาหาร + เครื่องดื่ม)</p></div></div>
+    <p>จัดลง A4 แผ่นละ 20 ใบ (4×5) มีเส้นประสำหรับตัด · คนละ 2 ใบ (อาหาร + เครื่องดื่ม)</p></div></div>
   <div class="toolbar">
     <select class="inp" style="max-width:240px" onchange="cpSel.base=this.value;render()">
       <option value="">— นักเรียนทุกฐาน —</option><option value="__none" ${cpSel.base==='__none'?'selected':''}>ยังไม่จัดฐาน</option>
@@ -993,10 +1016,10 @@ function vCoupons(v){
   <div class="card card-pad">
     <h3 style="font-size:15px;margin-bottom:12px">ตัวอย่างคูปอง (ย่อขนาด)</h3>
     <div style="display:flex;gap:18px;flex-wrap:wrap">
-      <div style="width:70mm;height:99mm;transform:scale(.8);transform-origin:top left">
-        <div class="cpage" style="width:70mm;height:99mm;padding:0;grid-template-columns:1fr;grid-template-rows:1fr">${food}</div></div>
-      <div style="width:70mm;height:99mm;transform:scale(.8);transform-origin:top left">
-        <div class="cpage" style="width:70mm;height:99mm;padding:0;grid-template-columns:1fr;grid-template-rows:1fr">${drink}</div></div>
+      <div style="width:50mm;height:57mm;transform:scale(1.2);transform-origin:top left;margin:0 12mm 12mm 0">
+        <div class="cpage" style="width:50mm;height:57mm;padding:0;grid-template-columns:1fr;grid-template-rows:1fr">${food}</div></div>
+      <div style="width:50mm;height:57mm;transform:scale(1.2);transform-origin:top left;margin:0 12mm 12mm 0">
+        <div class="cpage" style="width:50mm;height:57mm;padding:0;grid-template-columns:1fr;grid-template-rows:1fr">${drink}</div></div>
     </div>
     <p style="font-size:13px;color:var(--muted);margin-top:${'14px'}">
       แก้ชื่อครูผู้ลงนาม มูลค่าคูปอง และโลโก้โรงเรียนได้ที่เมนู <b>ตั้งค่า</b> ·
@@ -1009,7 +1032,7 @@ function printCoupons(which){
   const food=couponHTML('คูปองอาหาร', S.cfg.foodVal||30, '#b0453a');
   const drink=couponHTML('คูปองเครื่องดื่ม', S.cfg.drinkVal||10, '#2f6f5e');
   const pages=(cell)=>{ let out=''; let left=n;
-    while(left>0){ const k=Math.min(9,left); out+='<div class="cpage">'+cell.repeat(k)+'</div>'; left-=k; }
+    while(left>0){ const k=Math.min(20,left); out+='<div class="cpage">'+cell.repeat(k)+'</div>'; left-=k; }
     return out; };
   let html='';
   if(which==='food'||which==='all') html+=pages(food);
