@@ -139,6 +139,19 @@ tbody tr:hover{background:var(--brown-100)}
 .cd-nums span{font-size:11.5px;color:var(--muted)}
 .cd-box.over{border-color:#e8c6c1}
 .cd-box.over .cd-lb{color:var(--bad)}
+/* ---------- board (padlet) ---------- */
+.board-wrap{max-width:1180px;margin:0 auto;padding:0 14px 40px}
+.board-grid{columns:4 260px;column-gap:14px}
+@media(max-width:900px){.board-grid{columns:2 200px}}
+.note{break-inside:avoid;margin:0 0 14px;border-radius:16px;padding:14px 15px;box-shadow:0 6px 18px rgba(59,37,25,.10);
+  border:1px solid rgba(0,0,0,.05);position:relative}
+.note .nt-tag{display:inline-block;font-size:11.5px;padding:2px 9px;border-radius:99px;background:rgba(255,255,255,.65);
+  color:#4a3324;margin-bottom:8px;font-weight:600}
+.note h5{font-family:var(--head);font-size:13.5px;color:#5a3f2c;margin-bottom:6px;font-weight:600}
+.note p{font-size:14px;line-height:1.55;color:#2c1c12;white-space:pre-wrap;word-break:break-word}
+.note .nt-foot{margin-top:10px;font-size:11.5px;color:#6b5341;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.note .stars{color:#d99a1e;letter-spacing:1px}
+.board-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:1180px;margin:0 auto 16px;padding:0 14px}
 .pub-head p{opacity:.9;font-size:13.5px;margin-top:4px}
 .qbox{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
 .qbox h4{font-size:15px;margin-bottom:10px}
@@ -198,6 +211,22 @@ dialog::backdrop{background:rgba(59,37,25,.45);backdrop-filter:blur(2px)}
   font-family:var(--head);font-weight:500;font-size:5.2mm;line-height:1.3;margin-top:auto}
 .tag-base small{display:block;font-size:3.4mm;opacity:.85;font-weight:400;letter-spacing:.3mm}
 
+/* ---------- PRINT: coupons ---------- */
+.cpage{width:210mm;height:297mm;padding:6mm;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+  gap:0;page-break-after:always;background:#fff;box-sizing:border-box}
+.cp{padding:1.2mm;box-sizing:border-box;display:flex;outline:.2mm dashed #b9a893;outline-offset:-.1mm}
+.cp-in{flex:1;border:.9mm double var(--cc,#6b4630);border-radius:3mm;display:flex;flex-direction:column;
+  align-items:center;justify-content:space-between;text-align:center;padding:3mm 2.5mm;position:relative;background:#fff;overflow:hidden}
+.cp-in:before{content:"";position:absolute;inset:1.6mm;border:.25mm solid var(--cc,#6b4630);border-radius:2mm;opacity:.45;pointer-events:none}
+.cp-logos{display:flex;align-items:center;justify-content:center;gap:3mm;position:relative;z-index:2}
+.cp-logos img{height:11mm;width:auto;max-width:26mm;object-fit:contain;display:block}
+.cp-kind{font-family:var(--head);font-weight:700;font-size:5mm;color:var(--cc,#6b4630);line-height:1.2;position:relative;z-index:2}
+.cp-val{font-family:var(--head);font-weight:700;font-size:7.5mm;color:var(--cc,#6b4630);line-height:1;position:relative;z-index:2}
+.cp-val small{display:block;font-size:3mm;font-weight:400;color:#7a6553;letter-spacing:.3mm;margin-top:.8mm}
+.cp-camp{font-size:2.9mm;color:#7a6553;position:relative;z-index:2}
+.cp-sign{width:100%;font-size:2.8mm;color:#5a4335;position:relative;z-index:2}
+.cp-sign .ln{display:block;border-bottom:.2mm dotted #8a725e;height:5mm;margin:0 4mm 1mm}
+
 /* ---------- PRINT: roster ---------- */
 .sheet{width:210mm;min-height:297mm;padding:15mm 14mm;background:#fff;page-break-after:always}
 .sheet h1{text-align:center;font-size:18pt;margin-bottom:2mm}
@@ -211,7 +240,9 @@ dialog::backdrop{background:rgba(59,37,25,.45);backdrop-filter:blur(2px)}
   body{background:#fff}
   body.printing .app-shell,body.printing #loginView,body.printing #publicView,body.printing #toast{display:none !important}
   body.printing #printRoot{display:block !important}
-  .a4,.sheet{box-shadow:none;margin:0}
+  .a4,.sheet,.cpage{box-shadow:none;margin:0}
+  .cpage{width:100%;height:100vh}
+  .cp-in,.cp-in:before,.cp{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .a4{width:100%;height:100vh;max-width:none}
   html,body{width:100%;margin:0;padding:0}
   .tag-in,.tag-in:before,.tag-base,.sheet th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -302,16 +333,37 @@ const DEFAULT_SPEAKERS = [
   {name:'นายสุขภชัย เฉลิม',org:'ครูโรงเรียนดินดำบัวรองวิทยา อ.จังหาร จ.ร้อยเอ็ด',base:'ฐานกวีนิพนธ์ร้อยกรอง',phone:'',invite:'ผ่านต้นสังกัด',bio:'นามปากกา "สงกาสังข์" เจ้าของช่องยูทูบ "ครูน็อต ฉันทะลัก"'},
   {name:'นายอรรณพ วันศรี',org:'นักเขียนอิสระ',base:'ฐานกวีนิพนธ์ไร้ฉันทลักษณ์',phone:'',invite:'เชิญตรง',bio:'นักเขียนอิสระ วิทยากรฐานกวีนิพนธ์ไร้ฉันทลักษณ์'}
 ];
-const EVAL_Q = [
-  'ความเหมาะสมของสถานที่และระยะเวลาในการจัดกิจกรรม',
-  'ความพร้อมของสื่อ อุปกรณ์ และเอกสารประกอบกิจกรรม',
-  'ความรู้ความสามารถของวิทยากรในการถ่ายทอดเนื้อหา',
-  'เนื้อหากิจกรรมมีความน่าสนใจและเข้าใจง่าย',
-  'ท่านมีส่วนร่วมในการทำกิจกรรมอย่างทั่วถึง',
-  'ท่านได้รับความรู้และทักษะการอ่าน–การเขียนเพิ่มขึ้น',
-  'ท่านสามารถนำความรู้ที่ได้ไปใช้ประโยชน์ได้จริง',
-  'ความพึงพอใจในภาพรวมต่อการจัดกิจกรรม'
+const EVAL_SEC = [
+  {name:'ด้านกระบวนการและขั้นตอนการจัดกิจกรรม', qs:[
+    'การประชาสัมพันธ์และการรับสมัครเข้าร่วมกิจกรรมมีความชัดเจน',
+    'ขั้นตอนการลงทะเบียนและการเข้าร่วมฐานกิจกรรมสะดวก รวดเร็ว',
+    'ลำดับขั้นตอนของกิจกรรมมีความต่อเนื่องและเหมาะสม',
+    'ระยะเวลาในการจัดกิจกรรมแต่ละฐานมีความเหมาะสม',
+    'การชี้แจงกติกา กำหนดการ และข้อปฏิบัติมีความชัดเจน']},
+  {name:'ด้านวิทยากรและการถ่ายทอดความรู้', qs:[
+    'วิทยากรมีความรู้ความเชี่ยวชาญในเนื้อหาที่ถ่ายทอด',
+    'วิทยากรใช้ภาษาและวิธีการอธิบายที่เข้าใจง่าย',
+    'วิทยากรเปิดโอกาสให้ซักถามและแลกเปลี่ยนความคิดเห็น',
+    'วิทยากรกระตุ้นให้ผู้เข้าร่วมมีส่วนร่วมอย่างทั่วถึง',
+    'บุคลิกภาพและการสร้างบรรยากาศการเรียนรู้ของวิทยากร']},
+  {name:'ด้านสถานที่ สื่อ และสิ่งอำนวยความสะดวก', qs:[
+    'สถานที่จัดกิจกรรมมีความเหมาะสมและเพียงพอ',
+    'สื่อ อุปกรณ์ และเอกสารประกอบกิจกรรมมีความพร้อม',
+    'เอกสาร/ใบงานมีเนื้อหาชัดเจน ใช้งานได้จริง',
+    'ระบบเสียง แสง และอุปกรณ์นำเสนอมีคุณภาพเหมาะสม',
+    'อาหาร เครื่องดื่ม และการต้อนรับมีความเหมาะสม']},
+  {name:'ด้านประโยชน์และการนำไปใช้', qs:[
+    'ท่านมีความรู้ความเข้าใจด้านการอ่านเพิ่มขึ้น',
+    'ท่านมีทักษะการเขียนเชิงสร้างสรรค์เพิ่มขึ้น',
+    'ท่านเกิดแรงบันดาลใจและเจตคติที่ดีต่อวรรณกรรมไทย',
+    'ท่านสามารถนำความรู้ที่ได้รับไปใช้ประโยชน์ได้จริง',
+    'ความพึงพอใจในภาพรวมต่อการจัดกิจกรรมครั้งนี้']}
 ];
+const EVAL_Q = EVAL_SEC.reduce((a,s2)=>a.concat(s2.qs),[]);
+function secRange(i){ // ดัชนีข้อเริ่ม-จบของแต่ละด้าน
+  let st=0; for(let k=0;k<i;k++) st+=EVAL_SEC[k].qs.length;
+  return [st, st+EVAL_SEC[i].qs.length];
+}
 const LEVELS = ['ม.1','ม.2','ม.3','ม.4','ม.5','ม.6'];
 
 /* ================= STATE ================= */
@@ -343,7 +395,7 @@ async function loadAll(){
   S.cfg = cf.exists ? cf.data() : {};
   if(!S.cfg.campName){
     S.cfg = {campName:'ค่ายวรรณธารกระดุมทอง', project:'โครงการพัฒนาทักษะการอ่าน การเขียน "วรรณธารกระดุมทอง"',
-      school:'', eventDate:'', password:'wannatharn', logo:'', openChoice:true, openEval:true, autoCreate:true, autoPlace:true, ...S.cfg};
+      school:'', eventDate:'', password:'wannatharn', logo:'', openChoice:true, openEval:true, openBoard:true, schoolLogo:'https://nonthaphathr.github.io/uploadimg/logoschool.png', signName:'', foodVal:30, drinkVal:10, autoCreate:true, autoPlace:true, ...S.cfg};
     await C.settings.doc('main').set(S.cfg,{merge:true});
   }
   if(S.bases.length===0) await seedDefaults();
@@ -369,7 +421,7 @@ function applyBranding(){
 
 /* ================= ROUTER ================= */
 const TABS=[['dash','ภาพรวม'],['parts','ผู้เข้าร่วม'],['speakers','วิทยากร'],['bases','ฐานกิจกรรม'],
-            ['forms','ฟอร์ม & ลิงก์'],['results','ผลตอบแบบสอบถาม'],['tags','พิมพ์ป้ายชื่อ'],['roster','พิมพ์ใบรายชื่อ'],['settings','ตั้งค่า']];
+            ['forms','ฟอร์ม & ลิงก์'],['results','ผลตอบแบบสอบถาม'],['board','กระดานข้อความ'],['tags','พิมพ์ป้ายชื่อ'],['coupons','คูปองอาหาร'],['roster','พิมพ์ใบรายชื่อ'],['settings','ตั้งค่า']];
 function renderNav(){
   $('#nav').innerHTML = TABS.map(([k,l])=>'<button class="'+(TAB===k?'on':'')+'" onclick="go(\''+k+'\')">'+l+'</button>').join('');
 }
@@ -377,7 +429,7 @@ function go(k){TAB=k;renderNav();render();window.scrollTo({top:0,behavior:'smoot
 function render(){
   const v=$('#view');
   ({dash:vDash,parts:vParts,speakers:vSpeakers,bases:vBases,forms:vForms,results:vResults,
-    tags:vTags,roster:vRoster,settings:vSettings}[TAB]||vDash)(v);
+    board:vBoard,coupons:vCoupons,tags:vTags,roster:vRoster,settings:vSettings}[TAB]||vDash)(v);
 }
 
 /* ================= 1. DASHBOARD ================= */
@@ -431,6 +483,14 @@ function vDash(v){
     </div>
     <div class="card card-pad">
       <h3 style="font-size:16px;margin-bottom:14px">ผลประเมินความพึงพอใจรายข้อ</h3>
+      ${S.evals.length?EVAL_SEC.map((sec,si)=>{
+        const [a2,b2]=secRange(si);
+        const all=[]; for(let i=a2;i<b2;i++) S.evals.forEach(e=>{const v2=+e['q'+(i+1)]; if(v2>0) all.push(v2);});
+        const av=all.length?all.reduce((x,y)=>x+y,0)/all.length:0;
+        return `<div class="rate" style="background:var(--brown-100);border-radius:8px;padding:6px 8px;margin-bottom:6px">
+          <span class="lab"><b>ตอนที่ ${si+1} ${esc(sec.name)}</b></span>
+          <span class="stars">${'★'.repeat(Math.round(av))}${'☆'.repeat(5-Math.round(av))}</span>
+          <span class="score"><b>${av.toFixed(2)}</b></span></div>`;}).join(''):''}
       ${S.evals.length?EVAL_Q.map((q,i)=>{
         const arr=S.evals.map(e=>+e['q'+(i+1)]).filter(n=>n>0);
         const a=arr.length?arr.reduce((x,y)=>x+y,0)/arr.length:0;
@@ -462,6 +522,7 @@ function vParts(v){
     <button class="btn ghost sm" onclick="syncFromChoices()">⇩ ดึงรายชื่อจากแบบสำรวจ (${S.choices.length})</button>
     <button class="btn ghost sm" onclick="autoAssign()">⚙ จัดฐานอัตโนมัติ</button>
     <button class="btn ghost sm" onclick="vBalance()">⚖ ปรับเกลี่ยฐาน</button>
+    <button class="btn ghost sm" onclick="vUnreg()">🧩 จัดคนที่ยังไม่ลงทะเบียน (${unregParts().length})</button>
     <button class="btn ghost sm" onclick="exportParts()">⤓ Export .xlsx</button>
     <button class="btn sm" onclick="editPart()">+ เพิ่มนักเรียน</button>
   </div>
@@ -648,7 +709,7 @@ function editBase(id){
 
 /* ================= 5. FORMS & LINKS ================= */
 function vForms(v){
-  const l1=baseUrl()+'#/f/choose', l2=baseUrl()+'#/f/eval';
+  const l1=baseUrl()+'#/f/choose', l2=baseUrl()+'#/f/eval', l3=baseUrl()+'#/f/board';
   v.innerHTML=`
   <div class="page-head"><div><h2>ฟอร์ม & ลิงก์เผยแพร่</h2>
     <p>ส่งลิงก์หรือ QR ให้นักเรียน — ไม่ต้องล็อกอิน ข้อมูลเข้า Firestore ทันที</p></div></div>
@@ -675,12 +736,23 @@ function vForms(v){
       <div class="qr" id="qr2"></div>
       <div style="margin-top:10px;font-size:13px;color:var(--muted)">ตอบแล้ว ${S.evals.length} คน</div>
     </div>
+    <div class="linkcard">
+      <div style="display:flex;align-items:center;gap:8px"><span class="tag" style="background:#2f6f5e;color:#fff">กระดานข้อความ</span>
+        <label class="chk" style="margin-left:auto"><input type="checkbox" ${S.cfg.openBoard!==false?'checked':''} onchange="setCfg('openBoard',this.checked)"> เปิดดู</label></div>
+      <h3 style="font-size:17px;margin-top:10px">กระดานความประทับใจ</h3>
+      <p style="font-size:13px;color:var(--muted)">รวมข้อความ “ความประทับใจ” และ “ข้อเสนอแนะ” จากแบบประเมิน มาแสดงเป็นการ์ดให้อ่านร่วมกัน</p>
+      <div class="linkbox"><input class="inp" id="lk3" value="${l3}" readonly>
+        <button class="btn sm" onclick="copyLink('lk3')">คัดลอก</button>
+        <button class="btn ghost sm" onclick="window.open('${l3}','_blank')">เปิด</button></div>
+      <div class="qr" id="qr3"></div>
+      <div style="margin-top:10px;font-size:13px;color:var(--muted)">มีข้อความ ${boardNotes().length} ใบ</div>
+    </div>
   </div>
   <div class="card card-pad" style="margin-top:16px">
     <h3 style="font-size:15px;margin-bottom:6px">วิธีใช้</h3>
     <p style="font-size:13.5px;color:var(--muted)">อัปโหลดไฟล์นี้ขึ้นเว็บโฮสต์ (เช่น Firebase Hosting / GitHub Pages) แล้วลิงก์ข้างต้นจะกลายเป็น URL จริงที่แชร์ให้นักเรียนได้ทันที หากเปิดจากไฟล์ในเครื่อง ลิงก์จะชี้ไปที่ path ในเครื่องเท่านั้น</p>
   </div>`;
-  makeQR('qr1',l1); makeQR('qr2',l2);
+  makeQR('qr1',l1); makeQR('qr2',l2); makeQR('qr3',l3);
 }
 function makeQR(id,text){
   const el=$('#'+id); if(!el||typeof QRCode==='undefined')return;
@@ -717,12 +789,13 @@ function choiceTable(){
 function evalTable(){
   if(!S.evals.length) return '<div class="card"><div class="empty"><div class="big">⭐</div>ยังไม่มีผู้ตอบแบบประเมิน</div></div>';
   return `<div class="tw"><table><thead><tr><th class="num">#</th><th>สถานะผู้ตอบ</th><th>ฐาน</th>
-    ${EVAL_Q.map((_,i)=>`<th title="${esc(EVAL_Q[i])}">ข้อ ${i+1}</th>`).join('')}<th>เฉลี่ย</th><th>ข้อเสนอแนะ</th><th></th></tr></thead><tbody>
+    ${EVAL_Q.map((_,i)=>`<th title="${esc(EVAL_Q[i])}">ข้อ ${i+1}</th>`).join('')}<th>เฉลี่ย</th><th>ความประทับใจ</th><th>ข้อเสนอแนะ</th><th></th></tr></thead><tbody>
     ${S.evals.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map((e,i)=>`<tr>
       <td class="num">${i+1}</td><td>${esc(e.role||'-')}</td><td>${e.base?esc(baseShort(e.base)):'—'}</td>
       ${EVAL_Q.map((_,j)=>`<td style="text-align:center">${e['q'+(j+1)]||'-'}</td>`).join('')}
       <td style="text-align:center"><b>${avgOf(e).toFixed(2)}</b></td>
-      <td style="max-width:220px;font-size:12.5px">${esc(e.suggestion||'')}</td>
+      <td style="max-width:200px;font-size:12.5px">${esc(e.impression||'')}</td>
+      <td style="max-width:200px;font-size:12.5px">${esc(e.suggestion||'')}</td>
       <td class="act"><button class="btn danger sm" onclick="delDoc('evalResponses','${e.id}')">ลบ</button></td></tr>`).join('')}
   </tbody></table></div>`;
 }
@@ -735,7 +808,11 @@ function exportAll(){
     {name:'ความต้องการเข้าฐาน',rows:S.choices.map((c,i)=>({'ลำดับ':i+1,'ชื่อ-สกุล':(c.prefix||'')+c.name,'ระดับชั้น':c.level||'','ห้อง':c.room||'','อันดับ1':c.c1||'','อันดับ2':c.c2||'','อันดับ3':c.c3||'','เวลาตอบ':fmtTime(c.createdAt)}))},
     {name:'ความพึงพอใจ',rows:S.evals.map((e,i)=>{const o={'ลำดับ':i+1,'สถานะ':e.role||'','ฐาน':e.base||''};
       EVAL_Q.forEach((q,j)=>o['ข้อ'+(j+1)+'. '+q]=e['q'+(j+1)]||'');
-      o['เฉลี่ย']=+avgOf(e).toFixed(2); o['ข้อเสนอแนะ']=e.suggestion||''; o['เวลาตอบ']=fmtTime(e.createdAt); return o;})},
+      EVAL_SEC.forEach((sec,si)=>{const [a2,b2]=secRange(si);
+        const arr=EVAL_Q.slice(a2,b2).map((_,k)=>+e['q'+(a2+k+1)]).filter(n=>n>0);
+        o['เฉลี่ยด้าน: '+sec.name]=arr.length?+(arr.reduce((x,y)=>x+y,0)/arr.length).toFixed(2):'';});
+      o['เฉลี่ยรวม']=+avgOf(e).toFixed(2); o['ความประทับใจ']=e.impression||'';
+      o['ข้อเสนอแนะ']=e.suggestion||''; o['เวลาตอบ']=fmtTime(e.createdAt); return o;})},
     {name:'สรุปรายฐาน',rows:S.bases.map(b=>({'ฐาน':b.name,'วิทยากร':b.speaker||'','จำนวนนักเรียน':S.parts.filter(p=>p.base===b.name).length,'ความจุ':b.capacity||'','เลือกเป็นอันดับ1':S.choices.filter(c=>c.c1===b.name).length}))}
   ],'สรุปข้อมูลค่ายวรรณธารกระดุมทอง');
 }
@@ -874,6 +951,71 @@ function printRoster(){
   }).join('');
   doPrint(html);
 }
+/* ================= คูปองอาหาร / เครื่องดื่ม ================= */
+const SCHOOL_LOGO_DEFAULT='https://nonthaphathr.github.io/uploadimg/logoschool.png';
+function schoolLogo(){return S.cfg.schoolLogo||SCHOOL_LOGO_DEFAULT;}
+let cpSel={base:'',extra:0};
+function cpTargets(){
+  return S.parts.filter(p=>!cpSel.base||(cpSel.base==='__none'?!p.base:p.base===cpSel.base));
+}
+function couponHTML(kind,val,color){
+  const lg=S.cfg.logo?`<img src="${S.cfg.logo}" alt="">`:'';
+  const sn=(S.cfg.signName||'').trim();
+  return `<div class="cp"><div class="cp-in" style="--cc:${color}">
+    <div class="cp-logos">${lg}<img src="${schoolLogo()}" alt=""></div>
+    <div class="cp-kind">${esc(kind)}</div>
+    <div class="cp-val">${val} บาท<small>ใช้ได้ 1 ครั้ง · ไม่ทอนเงิน</small></div>
+    <div class="cp-camp">${esc(S.cfg.campName||'ค่ายวรรณธารกระดุมทอง')}</div>
+    <div class="cp-sign"><span class="ln"></span>ครูผู้ลงนาม${sn?' : '+esc(sn):''}</div>
+  </div></div>`;
+}
+function vCoupons(v){
+  const n=cpTargets().length + (+cpSel.extra||0);
+  const food=couponHTML('คูปองอาหาร', S.cfg.foodVal||30, '#b0453a');
+  const drink=couponHTML('คูปองเครื่องดื่ม', S.cfg.drinkVal||10, '#2f6f5e');
+  const sheets=Math.ceil(n/9)*2;
+  v.innerHTML=`
+  <div class="page-head"><div><h2>พิมพ์คูปองอาหาร &amp; เครื่องดื่ม</h2>
+    <p>จัดลง A4 แผ่นละ 9 ใบ (3×3) มีเส้นประสำหรับตัด · คนละ 2 ใบ (อาหาร + เครื่องดื่ม)</p></div></div>
+  <div class="toolbar">
+    <select class="inp" style="max-width:240px" onchange="cpSel.base=this.value;render()">
+      <option value="">— นักเรียนทุกฐาน —</option><option value="__none" ${cpSel.base==='__none'?'selected':''}>ยังไม่จัดฐาน</option>
+      ${S.bases.map(b=>`<option ${cpSel.base===b.name?'selected':''}>${esc(b.name)}</option>`).join('')}
+    </select>
+    <div class="field" style="margin:0"><input class="inp" style="max-width:150px" type="number" min="0"
+      value="${+cpSel.extra||0}" oninput="cpSel.extra=+this.value||0;render()" placeholder="เผื่อเพิ่ม (ใบ)"></div>
+    <span style="color:var(--muted);font-size:13.5px">พิมพ์ <b>${n}</b> ชุด = อาหาร ${n} ใบ + เครื่องดื่ม ${n} ใบ · ${sheets} แผ่น A4</span>
+    <div class="spacer"></div>
+    <button class="btn ghost sm" onclick="printCoupons('food')">🖨 เฉพาะคูปองอาหาร</button>
+    <button class="btn ghost sm" onclick="printCoupons('drink')">🖨 เฉพาะคูปองเครื่องดื่ม</button>
+    <button class="btn sm" onclick="printCoupons('all')">🖨 พิมพ์ทั้งสองชนิด</button>
+  </div>
+  <div class="card card-pad">
+    <h3 style="font-size:15px;margin-bottom:12px">ตัวอย่างคูปอง (ย่อขนาด)</h3>
+    <div style="display:flex;gap:18px;flex-wrap:wrap">
+      <div style="width:70mm;height:99mm;transform:scale(.8);transform-origin:top left">
+        <div class="cpage" style="width:70mm;height:99mm;padding:0;grid-template-columns:1fr;grid-template-rows:1fr">${food}</div></div>
+      <div style="width:70mm;height:99mm;transform:scale(.8);transform-origin:top left">
+        <div class="cpage" style="width:70mm;height:99mm;padding:0;grid-template-columns:1fr;grid-template-rows:1fr">${drink}</div></div>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-top:${'14px'}">
+      แก้ชื่อครูผู้ลงนาม มูลค่าคูปอง และโลโก้โรงเรียนได้ที่เมนู <b>ตั้งค่า</b> ·
+      ตอนสั่งพิมพ์ให้ตั้ง Margins = None และ Scale = 100%</p>
+  </div>`;
+}
+function printCoupons(which){
+  const n=cpTargets().length + (+cpSel.extra||0);
+  if(!n) return toast('ยังไม่มีนักเรียนสำหรับพิมพ์คูปอง');
+  const food=couponHTML('คูปองอาหาร', S.cfg.foodVal||30, '#b0453a');
+  const drink=couponHTML('คูปองเครื่องดื่ม', S.cfg.drinkVal||10, '#2f6f5e');
+  const pages=(cell)=>{ let out=''; let left=n;
+    while(left>0){ const k=Math.min(9,left); out+='<div class="cpage">'+cell.repeat(k)+'</div>'; left-=k; }
+    return out; };
+  let html='';
+  if(which==='food'||which==='all') html+=pages(food);
+  if(which==='drink'||which==='all') html+=pages(drink);
+  doPrint(html);
+}
 function doPrint(html){
   $('#printRoot').innerHTML=html;
   document.body.classList.add('printing');
@@ -904,6 +1046,19 @@ function vSettings(v){
       </div>
       <input type="file" class="inp" id="s_logo" accept="image/*" onchange="uploadLogo(this)">
       ${c.logo?'<button class="btn danger sm" style="margin-top:10px" onclick="setCfg(\'logo\',\'\').then(reload)">ลบโลโก้</button>':''}
+      <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+      <h3 style="font-size:16px;margin-bottom:10px">คูปองอาหาร / เครื่องดื่ม</h3>
+      <div class="field"><label>URL โลโก้โรงเรียน (แสดงคู่กับโลโก้ระบบบนคูปอง)</label>
+        <input class="inp" id="s_slogo" value="${esc(c.schoolLogo||SCHOOL_LOGO_DEFAULT)}"></div>
+      <div class="field"><label>ชื่อครูผู้ลงนามรับรองคูปอง</label>
+        <input class="inp" id="s_sign" value="${esc(c.signName||'')}" placeholder="เช่น นายนนทภัทร ..."></div>
+      <div class="row c2">
+        <div class="field"><label>มูลค่าคูปองอาหาร (บาท)</label>
+          <input class="inp" type="number" id="s_food" value="${c.foodVal||30}"></div>
+        <div class="field"><label>มูลค่าคูปองเครื่องดื่ม (บาท)</label>
+          <input class="inp" type="number" id="s_drink" value="${c.drinkVal||10}"></div>
+      </div>
+      <button class="btn ghost" onclick="saveCoupon()">บันทึกข้อมูลคูปอง</button>
       <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
       <h3 style="font-size:16px;margin-bottom:10px">รหัสผ่านผู้ดูแล</h3>
       <div class="field"><input class="inp" id="s_pw" type="text" value="${esc(c.password||'wannatharn')}"></div>
@@ -962,6 +1117,11 @@ function vSettings(v){
       <button class="btn danger sm" onclick="wipe('evalResponses','คำตอบแบบประเมิน')">ล้างคำตอบแบบประเมิน</button>
     </div>
   </div>`;
+}
+async function saveCoupon(){
+  const d={schoolLogo:val('s_slogo').trim()||SCHOOL_LOGO_DEFAULT, signName:val('s_sign').trim(),
+    foodVal:+val('s_food')||30, drinkVal:+val('s_drink')||10};
+  await C.settings.doc('main').set(d,{merge:true}); Object.assign(S.cfg,d); toast('บันทึกข้อมูลคูปองแล้ว');
 }
 async function saveGeneral(){
   const d={campName:val('s_camp'),project:val('s_proj'),school:val('s_school'),eventDate:val('s_date')};
@@ -1125,6 +1285,82 @@ async function placeInBase(pid,prefs){
   await C.participants.doc(pid).update({base:pick});
   return pick;
 }
+/* ---- จัดนักเรียนที่ยังไม่ได้ลงทะเบียนเลือกฐาน ---- */
+function hasChoice(p){
+  const k=normN((p.fname||'')+(p.lname||''));
+  return S.choices.some(c=>c.pid===p.id ||
+    normN(splitName(c.name).fn+splitName(c.name).ln)===k);
+}
+function unregParts(){ return S.parts.filter(p=>!hasChoice(p) && !p.base); }
+function rosterMissing(){   // ชื่อในทะเบียนโรงเรียนที่ยังไม่มีในผู้เข้าร่วม
+  const have=new Set(S.parts.map(p=>normN((p.fname||'')+(p.lname||''))));
+  return S.roster.filter(r=>!have.has(normN((r.fname||'')+(r.lname||''))));
+}
+function vUnreg(){
+  const un=unregParts(), miss=rosterMissing();
+  const capOf=n=>{const b=S.bases.find(x=>x.name===n);return b&&b.capacity?b.capacity:999;};
+  const cnt={}; S.bases.forEach(b=>cnt[b.name]=S.parts.filter(p=>p.base===b.name).length);
+  const freeTotal=S.bases.reduce((a,b)=>a+Math.max(0,capOf(b.name)-cnt[b.name]),0);
+  openDlg('จัดนักเรียนที่ยังไม่ลงทะเบียนลงฐาน',`
+    <p style="font-size:13.5px;color:var(--muted);margin-bottom:12px">
+      ระบบเทียบรายชื่อผู้เข้าร่วมทั้งหมด (ที่นำเข้าจาก Excel/CSV) กับคำตอบแบบสำรวจ
+      แล้วนำ “คนที่ยังไม่ได้ลงทะเบียนเลือกฐาน” มาจัดลงฐานที่ยังไม่เต็ม โดยเกลี่ยให้แต่ละฐานมีจำนวนใกล้เคียงกัน
+      (เลือกฐานที่มีคนน้อยที่สุดก่อนเสมอ) — ไม่กระทบคนที่จัดฐานไว้แล้ว</p>
+    ${S.bases.map(b=>{const left=Math.max(0,capOf(b.name)-cnt[b.name]);
+      return `<div class="bar-row" style="grid-template-columns:minmax(120px,1fr) 2fr auto">
+      <span class="tag" style="background:${b.color}1a;color:${b.color}"><i class="dot" style="background:${b.color}"></i>${esc(b.short||b.name)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,cnt[b.name]/capOf(b.name)*100)}%;background:${b.color}"></div></div>
+      <span class="bar-val">${cnt[b.name]}/${b.capacity||'—'} · ว่าง ${left}</span></div>`;}).join('')}
+    <div style="margin-top:14px;font-size:13.5px">
+      ยังไม่ลงทะเบียนและยังไม่มีฐาน <b>${un.length}</b> คน · ที่นั่งว่างรวม <b>${freeTotal}</b> ที่นั่ง
+      ${un.length>freeTotal?'<div style="color:var(--bad);margin-top:6px">* ที่นั่งไม่พอ ระบบจะจัดเท่าที่ว่างและข้ามส่วนที่เกิน (ปรับความจุฐานได้ที่แท็บฐานกิจกรรม)</div>':''}</div>
+    ${un.length?`<div style="margin-top:12px;max-height:190px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px">
+      ${un.map((p,i)=>`<div>${i+1}. ${esc(fullName(p))} <span style="color:var(--muted)">${esc(p.level||'')}${p.room?'/'+esc(p.room):''}</span></div>`).join('')}
+    </div>`:'<div style="margin-top:12px;color:var(--muted);font-size:13.5px">ไม่มีรายชื่อค้าง — ทุกคนลงทะเบียนหรือมีฐานแล้ว</div>'}
+    ${miss.length?`<label class="chk" style="margin-top:14px"><input type="checkbox" id="ur_addroster">
+      เพิ่มรายชื่อจากทะเบียนโรงเรียนที่ยังไม่อยู่ในผู้เข้าร่วมอีก ${miss.length} คน แล้วจัดฐานด้วย</label>`:''}
+    <div class="field" style="margin-top:14px"><label>ลำดับการจัด</label>
+      <select class="inp" id="ur_order">
+        <option value="level">เรียงตามระดับชั้น/ห้อง แล้วกระจายลงฐาน (แนะนำ)</option>
+        <option value="name">เรียงตามชื่อ</option>
+        <option value="rand">สุ่มลำดับ</option>
+      </select></div>
+  `, async ()=>{ await runUnreg(val('ur_order'), !!($('#ur_addroster')&&$('#ur_addroster').checked)); }, 'จัดลงฐาน');
+}
+async function runUnreg(order,addRoster){
+  const capOf=n=>{const b=S.bases.find(x=>x.name===n);return b&&b.capacity?b.capacity:999;};
+  if(!S.bases.length) return toast('ยังไม่มีฐานกิจกรรม');
+  if(addRoster){
+    const miss=rosterMissing();
+    if(miss.length){
+      const b0=db.batch();
+      miss.forEach(r=>b0.set(C.participants.doc(),{prefix:r.prefix||'',fname:r.fname||'',lname:r.lname||'',
+        level:r.level||'',room:r.room||'',sid:r.sid||'',base:'',note:'',source:'ทะเบียนโรงเรียน',createdAt:Date.now()}));
+      await b0.commit(); await reload();
+    }
+  }
+  let un=unregParts();
+  if(!un.length) return toast('ไม่มีรายชื่อที่ต้องจัด');
+  if(order==='rand') un=un.map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+  else if(order==='name') un.sort((a,b)=>fullName(a).localeCompare(fullName(b),'th'));
+  else un.sort((a,b)=>((a.level||'')+'/'+(a.room||'')).localeCompare((b.level||'')+'/'+(b.room||''),'th')
+      || fullName(a).localeCompare(fullName(b),'th'));
+  const cnt={}; S.bases.forEach(b=>cnt[b.name]=S.parts.filter(p=>p.base===b.name).length);
+  const batch=db.batch(); const moves=[]; let skip=0;
+  for(const p of un){
+    const cand=S.bases.map(b=>({n:b.name,c:cnt[b.name],left:capOf(b.name)-cnt[b.name]}))
+      .filter(x=>x.left>0).sort((a,b)=>a.c-b.c||a.left-b.left);
+    if(!cand.length){ skip++; continue; }
+    const dest=cand[0].n;
+    batch.update(C.participants.doc(p.id),{base:dest});
+    cnt[dest]++; moves.push(fullName(p)+' → '+baseShort(dest));
+  }
+  if(!moves.length) return toast('ไม่มีที่นั่งว่างสำหรับจัดฐาน');
+  await batch.commit(); await reload();
+  toast('จัดลงฐานแล้ว '+moves.length+' คน'+(skip?(' · ที่นั่งไม่พอ '+skip+' คน'):''));
+  console.log('จัดคนที่ยังไม่ลงทะเบียน:\n'+moves.join('\n'));
+}
+
 /* ---- ระบบปรับเกลี่ยฐาน ---- */
 function prefsOf(p){
   const c=S.choices.find(x=>x.pid===p.id)
@@ -1230,6 +1466,63 @@ function cdTick(){
 }
 function cdStart(){ if(cdTimer) clearInterval(cdTimer); if(!cdActive()) return; cdTick(); cdTimer=setInterval(cdTick,1000); }
 
+/* ================= BOARD (กระดานข้อความ) ================= */
+const NOTE_BG=['#fff4d6','#ffe3e0','#e2f2ea','#e4ecfa','#f1e6f8','#fdf0e2','#e8f4f8','#f7f0dd'];
+function boardNotes(){
+  const out=[];
+  S.evals.forEach((e,i)=>{
+    const av=avgOf(e);
+    if(e.impression&&String(e.impression).trim())
+      out.push({kind:'ความประทับใจ',text:String(e.impression).trim(),role:e.role||'ผู้เข้าร่วม',base:e.base||'',
+        avg:av,t:e.createdAt||0,c:NOTE_BG[(i*2)%NOTE_BG.length]});
+    if(e.suggestion&&String(e.suggestion).trim())
+      out.push({kind:'ข้อเสนอแนะ',text:String(e.suggestion).trim(),role:e.role||'ผู้เข้าร่วม',base:e.base||'',
+        avg:av,t:e.createdAt||0,c:NOTE_BG[(i*2+3)%NOTE_BG.length]});
+  });
+  return out.sort((a,b)=>b.t-a.t);
+}
+let bdFilter={kind:'',base:'',q:''};
+function boardHTML(){
+  let n=boardNotes();
+  if(bdFilter.kind) n=n.filter(x=>x.kind===bdFilter.kind);
+  if(bdFilter.base) n=n.filter(x=>x.base===bdFilter.base);
+  if(bdFilter.q){const q=bdFilter.q.trim(); if(q) n=n.filter(x=>x.text.includes(q));}
+  const bar=`<div class="board-bar">
+    <input class="inp" style="max-width:230px" placeholder="ค้นหาข้อความ" value="${esc(bdFilter.q)}"
+      oninput="bdFilter.q=this.value;refreshBoard()">
+    <select class="inp" style="max-width:180px" onchange="bdFilter.kind=this.value;refreshBoard()">
+      <option value="">— ทุกประเภท —</option>
+      <option ${bdFilter.kind==='ความประทับใจ'?'selected':''}>ความประทับใจ</option>
+      <option ${bdFilter.kind==='ข้อเสนอแนะ'?'selected':''}>ข้อเสนอแนะ</option></select>
+    <select class="inp" style="max-width:230px" onchange="bdFilter.base=this.value;refreshBoard()">
+      <option value="">— ทุกฐาน —</option>
+      ${S.bases.map(b=>`<option ${bdFilter.base===b.name?'selected':''}>${esc(b.name)}</option>`).join('')}</select>
+    <span style="font-size:13px;color:var(--muted)">${n.length} ข้อความ</span>
+    <button class="btn ghost sm" onclick="reload().then(refreshBoard)">↻ รีเฟรช</button></div>`;
+  const body = n.length
+    ? `<div class="board-grid">${n.map(x=>{
+        const col=x.base?baseColor(x.base):'#6b4630';
+        return `<div class="note" style="background:${x.c}">
+          <span class="nt-tag">${esc(x.kind)}</span>
+          ${x.base?`<h5><i class="dot" style="background:${col};display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px"></i>${esc(baseShort(x.base))}</h5>`:''}
+          <p>${esc(x.text)}</p>
+          <div class="nt-foot"><span>— ${esc(x.role)}</span>
+            ${x.avg?`<span class="stars">${'★'.repeat(Math.round(x.avg))}</span>`:''}
+            <span style="margin-left:auto">${fmtTime(x.t)}</span></div></div>`;}).join('')}</div>`
+    : '<div class="card"><div class="empty"><div class="big">💬</div>ยังไม่มีข้อความจากแบบประเมิน</div></div>';
+  return bar+`<div class="board-wrap" id="bdBody">${body}</div>`;
+}
+function refreshBoard(){
+  const host=$('#pubBody')||$('#view'); if(!host) return;
+  const cur=host.querySelector('.board-bar'); if(!cur) return;
+  const wrap=cur.parentElement; wrap.innerHTML=boardHTML();
+}
+function vBoard(v){
+  v.innerHTML=`<div class="page-head"><div><h2>กระดานข้อความ</h2>
+    <p>ความประทับใจและข้อเสนอแนะจากแบบประเมินความพึงพอใจ</p></div></div>
+    <div>${boardHTML()}</div>`;
+}
+
 /* ================= PUBLIC FORMS ================= */
 function renderPublic(kind){
   $('#loginView').classList.add('hide'); $('#appView').classList.add('hide');
@@ -1237,6 +1530,12 @@ function renderPublic(kind){
   const logo=S.cfg.logo?`<img src="${S.cfg.logo}">`:`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><path d="M3 5.5A2.5 2.5 0 0 1 5.5 3H10a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H3z"/><path d="M21 5.5A2.5 2.5 0 0 0 18.5 3H14a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h7z"/></svg>`;
   const head=(t,s)=>`<div class="pub-head"><div class="lg${S.cfg.logo?' has-img':''}">${logo}</div><h1>${t}</h1><p>${s}</p></div>`;
   const sub=[S.cfg.school,S.cfg.eventDate].filter(Boolean).join(' · ');
+  if(kind==='board'){
+    if(S.cfg.openBoard===false) return $('#pubBody').innerHTML=head('กระดานความประทับใจ',sub)+
+      '<div class="card card-pad done"><div class="ic">🔒</div><h3>ปิดการแสดงกระดาน</h3><p style="color:var(--muted)">ผู้ดูแลปิดการเข้าชมกระดานข้อความชั่วคราว</p></div>';
+    return $('#pubBody').innerHTML=head('กระดานความประทับใจ',(S.cfg.campName||'')+(sub?' · '+sub:''))+
+      `<div>${boardHTML()}</div>`;
+  }
   if(kind==='choose'){
     if(S.cfg.openChoice===false) return $('#pubBody').innerHTML=head('แบบสำรวจความต้องการเข้าฐาน',sub)+
       '<div class="card card-pad done"><div class="ic">🔒</div><h3>ปิดรับคำตอบแล้ว</h3><p style="color:var(--muted)">ขณะนี้ระบบปิดรับแบบสำรวจนี้</p></div>';
@@ -1279,13 +1578,20 @@ function renderPublic(kind){
       </div>
       <div class="qbox"><h4>ระดับความพึงพอใจ</h4>
         <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px">5 = มากที่สุด · 4 = มาก · 3 = ปานกลาง · 2 = น้อย · 1 = น้อยที่สุด</p>
-        ${EVAL_Q.map((q,i)=>`<div style="margin-bottom:16px">
-          <div style="font-size:14px;margin-bottom:7px">${i+1}. ${esc(q)}</div>
-          <div class="scale">${[1,2,3,4,5].map(n=>`<label><input type="radio" name="q${i+1}" value="${n}"><span class="n">${n}</span></label>`).join('')}</div>
-        </div>`).join('')}
+        ${EVAL_SEC.map((sec,si)=>{const [st]=secRange(si); return `
+          <div style="margin:${si?'22px':'0'} 0 10px;padding:8px 12px;background:var(--brown-100);border-radius:10px;
+            font-family:var(--head);font-weight:600;font-size:14.5px;color:var(--brown-800)">
+            ตอนที่ ${si+1} ${esc(sec.name)}</div>
+          ${sec.qs.map((q,k)=>{const i=st+k; return `<div style="margin-bottom:16px">
+            <div style="font-size:14px;margin-bottom:7px">${i+1}. ${esc(q)}</div>
+            <div class="scale">${[1,2,3,4,5].map(n=>`<label><input type="radio" name="q${i+1}" value="${n}"><span class="n">${n}</span></label>`).join('')}</div>
+          </div>`;}).join('')}`;}).join('')}
       </div>
-      <div class="qbox"><h4>ข้อเสนอแนะเพิ่มเติม</h4>
-        <textarea class="inp" id="e_sug" placeholder="สิ่งที่ประทับใจ / สิ่งที่ควรปรับปรุง"></textarea></div>
+      <div class="qbox"><h4>ความคิดเห็นเพิ่มเติม <span style="color:var(--bad);font-weight:400">(บังคับกรอกทั้ง 2 ข้อ)</span></h4>
+        <div class="field"><label>1. ความประทับใจที่ได้รับจากกิจกรรม <span style="color:var(--bad)">*</span></label>
+          <textarea class="inp" id="e_imp" rows="3" placeholder="เช่น ประทับใจกิจกรรมฐานใด เพราะเหตุใด"></textarea></div>
+        <div class="field"><label>2. ข้อเสนอแนะเพื่อการพัฒนาครั้งต่อไป <span style="color:var(--bad)">*</span></label>
+          <textarea class="inp" id="e_sug" rows="3" placeholder="สิ่งที่ควรปรับปรุง / สิ่งที่อยากให้เพิ่มเติม"></textarea></div></div>
       <button class="btn" style="width:100%;justify-content:center;padding:13px" onclick="submitEval()">ส่งแบบประเมิน</button>`;
   }
 }
@@ -1366,11 +1672,18 @@ async function submitChoice(){
     if(btn){btn.disabled=false;btn.textContent='ส่งแบบสำรวจ';}}
 }
 async function submitEval(){
-  const d={role:val('e_role'),base:val('e_base'),suggestion:val('e_sug').trim(),createdAt:Date.now()};
-  let miss=0;
+  const imp=val('e_imp').trim(), sug=val('e_sug').trim();
+  const d={role:val('e_role'),base:val('e_base'),impression:imp,suggestion:sug,createdAt:Date.now()};
+  let miss=0, first=0;
   EVAL_Q.forEach((_,i)=>{const r=document.querySelector('input[name="q'+(i+1)+'"]:checked');
-    if(r) d['q'+(i+1)]=+r.value; else miss++;});
-  if(miss) return toast('กรุณาตอบให้ครบทุกข้อ (ยังขาด '+miss+' ข้อ)');
+    if(r) d['q'+(i+1)]=+r.value; else {miss++; if(!first) first=i+1;}});
+  if(miss){ const el=document.querySelector('input[name="q'+first+'"]');
+    if(el) el.closest('div').scrollIntoView({behavior:'smooth',block:'center'});
+    return toast('กรุณาตอบให้ครบทุกข้อ (ยังขาด '+miss+' ข้อ · ข้อแรกที่ยังไม่ตอบคือข้อ '+first+')'); }
+  if(imp.length<5){ const e2=$('#e_imp'); if(e2){e2.focus();e2.scrollIntoView({behavior:'smooth',block:'center'});}
+    return toast('กรุณากรอก "ความประทับใจ" (อย่างน้อย 5 ตัวอักษร)'); }
+  if(sug.length<5){ const e3=$('#e_sug'); if(e3){e3.focus();e3.scrollIntoView({behavior:'smooth',block:'center'});}
+    return toast('กรุณากรอก "ข้อเสนอแนะ" (อย่างน้อย 5 ตัวอักษร)'); }
   try{
     await C.evals.add(d);
     $('#pubBody').innerHTML=`<div class="card card-pad done"><div class="ic">🌟</div>
@@ -1415,6 +1728,7 @@ function route(){
   const h=location.hash;
   if(h.startsWith('#/f/choose')) return renderPublic('choose');
   if(h.startsWith('#/f/eval')) return renderPublic('eval');
+  if(h.startsWith('#/f/board')) return renderPublic('board');
   if(authOK()) showApp();
   else {$('#appView').classList.add('hide');$('#publicView').classList.add('hide');$('#loginView').classList.remove('hide');}
 }
