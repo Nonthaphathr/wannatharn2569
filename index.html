@@ -566,6 +566,7 @@ function vParts(v){
     <button class="btn ghost sm" onclick="autoAssign()">⚙ จัดฐานอัตโนมัติ</button>
     <button class="btn ghost sm" onclick="vBalance()">⚖ ปรับเกลี่ยฐาน</button>
     <button class="btn ghost sm" onclick="vUnreg()">🧩 จัดคนที่ยังไม่ลงทะเบียน (${unregParts().length})</button>
+    <button class="btn ghost sm" onclick="vRosterAssign()">🔍 เทียบทะเบียนโรงเรียน &amp; จัดฐาน</button>
     <button class="btn ghost sm" onclick="exportParts()">⤓ Export .xlsx</button>
     <button class="btn sm" onclick="editPart()">+ เพิ่มนักเรียน</button>
   </div>
@@ -616,7 +617,19 @@ function editPart(id){
     const d={prefix:val('f_prefix'),fname:val('f_fname').trim(),lname:val('f_lname').trim(),
       level:val('f_level'),room:val('f_room').trim(),sid:val('f_sid').trim(),base:val('f_base'),note:val('f_note').trim()};
     if(!d.fname) return toast('กรุณากรอกชื่อ');
-    if(id) await C.participants.doc(id).update(d);
+    if(id){
+      await C.participants.doc(id).update(d);
+      // ซิงก์ชื่อ/ชั้น/ห้องไปยังคำตอบแบบสำรวจที่ผูกกับนักเรียนคนนี้ด้วย
+      const oldKey=normFuzzy(fullName(p));
+      const linked=S.choices.filter(c=>c.pid===id ||
+        (!c.pid && normFuzzy((c.prefix||'')+c.name)===oldKey) || normFuzzy(c.name)===oldKey);
+      if(linked.length){
+        const b=db.batch();
+        linked.forEach(c=>b.update(C.choices.doc(c.id),
+          {pid:id, prefix:d.prefix, name:(d.fname+' '+d.lname).trim(), level:d.level, room:d.room}));
+        await b.commit();
+      }
+    }
     else {d.createdAt=Date.now(); await C.participants.add(d);}
     await reload(); toast('บันทึกแล้ว');
   });
@@ -1790,6 +1803,131 @@ async function runUnreg(order,addRoster){
   await batch.commit(); await reload();
   toast('จัดลงฐานแล้ว '+moves.length+' คน'+(skip?(' · ที่นั่งไม่พอ '+skip+' คน'):''));
   console.log('จัดคนที่ยังไม่ลงทะเบียน:\n'+moves.join('\n'));
+}
+
+/* ---- เทียบทะเบียนโรงเรียนแบบ fuzzy แล้วจัดคนที่ยังไม่ลงทะเบียนลงฐาน ---- */
+function normFuzzy(t){
+  return String(t||'')
+    .replace(/(เด็กชาย|เด็กหญิง|นางสาว|นาย|นาง|ด\.ช\.|ด\.ญ\.)/g,'')
+    .replace(/[\s\u0E31\u0E34-\u0E3A\u0E47-\u0E4E\u0E2F\u0E46."'`-]/g,'')  // ตัดสระบน/ล่าง วรรณยุกต์ ช่องว่าง
+    .replace(/ํ/g,'').trim();
+}
+function lev(a,b){
+  const m=a.length,n=b.length; if(!m) return n; if(!n) return m;
+  let prev=Array.from({length:n+1},(_,j)=>j), cur=new Array(n+1);
+  for(let i=1;i<=m;i++){ cur[0]=i;
+    for(let j=1;j<=n;j++) cur[j]=Math.min(prev[j]+1, cur[j-1]+1, prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    [prev,cur]=[cur,prev];
+  }
+  return prev[n];
+}
+function simRatio(a,b){ const L=Math.max(a.length,b.length); return L? 1-lev(a,b)/L : 0; }
+/* คืนค่า {key, sim, target} ของคู่ที่ใกล้เคียงที่สุดในกลุ่มที่ลงทะเบียนแล้ว */
+function bestMatch(name, pool, minSim){
+  const q=normFuzzy(name); let best=null;
+  pool.forEach(x=>{
+    const t=normFuzzy(x.label);
+    if(!t||!q) return;
+    let sc = (t===q) ? 1 : (t.includes(q)||q.includes(t)) ? 0.95 : simRatio(q,t);
+    if(!best||sc>best.sim) best={sim:sc,target:x};
+  });
+  return (best && best.sim>=(minSim||0.86)) ? best : null;
+}
+let raState={min:0.86, skip:{}, cache:null};
+function raBuild(){
+  // กลุ่มที่ถือว่า "ลงทะเบียน/เลือกฐานแล้ว"
+  const pool=[];
+  S.choices.forEach(c=>pool.push({label:(c.name||''),src:'แบบสำรวจ'}));
+  S.parts.forEach(p=>{ if(p.base||hasChoice(p)) pool.push({label:fullName(p),src:'ทะเบียนผู้เข้าร่วม'}); });
+  const missing=[], fuzzy=[];
+  S.roster.forEach(r=>{
+    const nm=((r.fname||'')+' '+(r.lname||'')).trim(); if(!nm) return;
+    const m=bestMatch(nm,pool,raState.min);
+    if(m){ if(m.sim<0.999) fuzzy.push({name:nm,match:m.target.label,sim:m.sim,src:m.target.src}); }
+    else missing.push({r:r,name:nm});
+  });
+  raState.cache={missing,fuzzy};
+  return raState.cache;
+}
+function vRosterAssign(){
+  if(!S.roster.length) return toast('ยังไม่มีทะเบียนชื่อนักเรียนทั้งโรงเรียน — อัปโหลดได้ที่เมนูตั้งค่า');
+  if(!S.bases.length) return toast('ยังไม่มีฐานกิจกรรม');
+  raState.skip={};
+  const {missing,fuzzy}=raBuild();
+  const capOf=n=>{const b=S.bases.find(x=>x.name===n);return b&&b.capacity?b.capacity:999;};
+  const cnt={}; S.bases.forEach(b=>cnt[b.name]=S.parts.filter(p=>p.base===b.name).length);
+  const free=S.bases.reduce((a,b)=>a+Math.max(0,capOf(b.name)-cnt[b.name]),0);
+  openDlg('เทียบทะเบียนโรงเรียน & จัดคนที่ยังไม่ลงทะเบียนลงฐาน',`
+    <p style="font-size:13.5px;color:var(--muted);margin-bottom:12px">
+      ระบบเทียบรายชื่อใน <b>ทะเบียนชื่อนักเรียนทั้งโรงเรียน</b> (${S.roster.length} คน) กับผู้ที่ลงทะเบียน/เลือกฐานแล้ว
+      โดยตรวจแบบ fuzzy (ตัดคำนำหน้า ช่องว่าง สระ–วรรณยุกต์ และเทียบความคล้าย) — ผู้ที่มีฐานอยู่แล้วจะไม่ถูกแตะต้อง</p>
+    <div class="row c2">
+      <div class="field"><label>ความเข้มงวดการจับคู่ (ยิ่งสูงยิ่งถือว่าต่างคน)</label>
+        <select class="inp" id="ra_min" onchange="raState.min=+this.value;raRefresh()">
+          <option value="0.8" ${raState.min===0.8?'selected':''}>หลวม 0.80 (จับคู่ง่าย ลดการซ้ำ)</option>
+          <option value="0.86" ${raState.min===0.86?'selected':''}>ปานกลาง 0.86 (แนะนำ)</option>
+          <option value="0.93" ${raState.min===0.93?'selected':''}>เข้มงวด 0.93</option>
+        </select></div>
+      <div class="field" style="display:flex;align-items:flex-end;font-size:13.5px">
+        <div>ยังไม่ลงทะเบียน <b id="ra_n">${missing.length}</b> คน · ที่นั่งว่าง <b>${free}</b></div></div>
+    </div>
+    <div id="ra_body">${raBodyHTML()}</div>
+  `, async ()=>{ await runRosterAssign(); }, 'จัดลงฐาน');
+}
+function raBodyHTML(){
+  const {missing,fuzzy}=raState.cache;
+  return `
+  ${fuzzy.length?`<div style="margin-top:6px">
+    <div style="font-size:13.5px;font-weight:600;margin-bottom:6px">ชื่อที่จับคู่แบบ fuzzy (ถือว่าลงทะเบียนแล้ว ไม่จัดซ้ำ) — ${fuzzy.length} รายการ</div>
+    <div style="max-height:150px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:12.5px">
+      ${fuzzy.map(f=>`<div>• ${esc(f.name)} <span style="color:var(--muted)">≈ ${esc(f.match)} (${Math.round(f.sim*100)}% · ${esc(f.src)})</span></div>`).join('')}
+    </div></div>`:''}
+  <div style="margin-top:14px">
+    <div style="font-size:13.5px;font-weight:600;margin-bottom:6px">รายชื่อที่จะเพิ่มและจัดลงฐาน — ${missing.length} คน
+      <span style="font-weight:400;color:var(--muted)">(ติ๊กออกหากไม่ต้องการจัด)</span></div>
+    <div style="max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px">
+      ${missing.length?missing.map((m,i)=>`<label class="chk" style="margin-bottom:4px">
+        <input type="checkbox" class="rachk" data-i="${i}" ${raState.skip[m.name]?'':'checked'}
+          onchange="raState.skip['${esc(m.name).replace(/'/g,"\\'")}']=!this.checked">
+        ${i+1}. ${esc(m.name)} <span style="color:var(--muted)">${esc(m.r.level||'')}${m.r.room?'/'+esc(m.r.room):''}</span></label>`).join('')
+      :'<span style="color:var(--muted)">ไม่มีรายชื่อค้าง — ทุกคนในทะเบียนลงทะเบียนแล้ว</span>'}
+    </div>
+  </div>
+  <div class="field" style="margin-top:14px"><label>ลำดับการจัด</label>
+    <select class="inp" id="ra_order">
+      <option value="level">เรียงตามระดับชั้น/ห้อง แล้วกระจายลงฐาน (แนะนำ)</option>
+      <option value="name">เรียงตามชื่อ</option>
+      <option value="rand">สุ่มลำดับ</option>
+    </select></div>`;
+}
+function raRefresh(){ raBuild(); const b=$('#ra_body'); if(b) b.innerHTML=raBodyHTML();
+  const n=$('#ra_n'); if(n) n.textContent=raState.cache.missing.length; }
+async function runRosterAssign(){
+  const order=val('ra_order')||'level';
+  let list=(raState.cache?raState.cache.missing:[]).filter(m=>!raState.skip[m.name]);
+  if(!list.length) return toast('ไม่มีรายชื่อที่เลือกไว้สำหรับจัดฐาน');
+  if(order==='rand') list=list.map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+  else if(order==='name') list.sort((a,b)=>a.name.localeCompare(b.name,'th'));
+  else list.sort((a,b)=>((a.r.level||'')+'/'+(a.r.room||'')).localeCompare((b.r.level||'')+'/'+(b.r.room||''),'th')
+      || a.name.localeCompare(b.name,'th'));
+  const capOf=n=>{const b=S.bases.find(x=>x.name===n);return b&&b.capacity?b.capacity:999;};
+  const cnt={}; S.bases.forEach(b=>cnt[b.name]=S.parts.filter(p=>p.base===b.name).length);
+  const have=new Map(); S.parts.forEach(p=>have.set(normFuzzy(fullName(p)),p.id));
+  const batch=db.batch(); const moves=[]; let skip=0;
+  for(const m of list){
+    const cand=S.bases.map(b=>({n:b.name,c:cnt[b.name],left:capOf(b.name)-cnt[b.name]}))
+      .filter(x=>x.left>0).sort((a,b)=>a.c-b.c||a.left-b.left);
+    if(!cand.length){ skip++; continue; }
+    const dest=cand[0].n, r=m.r, pid=have.get(normFuzzy(m.name));
+    if(pid) batch.update(C.participants.doc(pid),{base:dest});
+    else batch.set(C.participants.doc(),{prefix:r.prefix||'',fname:r.fname||'',lname:r.lname||'',
+      level:r.level||'',room:r.room||'',sid:r.sid||'',base:dest,note:'',source:'ทะเบียนโรงเรียน (จัดฐานอัตโนมัติ)',createdAt:Date.now()});
+    cnt[dest]++; moves.push(m.name+' → '+baseShort(dest));
+  }
+  if(!moves.length) return toast('ไม่มีที่นั่งว่างสำหรับจัดฐาน');
+  await batch.commit(); await reload();
+  toast('จัดลงฐานแล้ว '+moves.length+' คน'+(skip?(' · ที่นั่งไม่พอ '+skip+' คน'):''));
+  console.log('เทียบทะเบียนโรงเรียน & จัดฐาน:\n'+moves.join('\n'));
 }
 
 /* ---- ระบบปรับเกลี่ยฐาน ---- */
