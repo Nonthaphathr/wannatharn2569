@@ -428,8 +428,10 @@ async function loadAll(){
   ]);
   S.bases = bs.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.order||0)-(b.order||0));
   S.speakers = sp.docs.map(d=>({id:d.id,...d.data()}));
-  S.parts = pa.docs.map(d=>({id:d.id,...d.data()}));
-  S.choices = ch.docs.map(d=>({id:d.id,...d.data()}));
+  S.partsAll = pa.docs.map(d=>({id:d.id,...d.data()}));
+  S.parts = dedupLatest(S.partsAll, p2=>normFuzzy((p2.fname||'')+(p2.lname||'')));
+  S.choicesAll = ch.docs.map(d=>({id:d.id,...d.data()}));
+  S.choices = dedupLatest(S.choicesAll, c=>normFuzzy((c.prefix||'')+(c.name||'')));
   S.evals = ev.docs.map(d=>({id:d.id,...d.data()}));
   S.roster = ro.docs.map(d=>({id:d.id,...d.data()}));
   S.cfg = cf.exists ? cf.data() : {};
@@ -660,14 +662,17 @@ function exportParts(){
 }
 
 /* ================= 3. SPEAKERS ================= */
+let spQ='';
 function vSpeakers(v){
+  const sps=S.speakers.filter(x=>hitQ(spQ,x.name,x.org,x.base,x.phone,x.bio));
   v.innerHTML=`
-  <div class="page-head"><div><h2>ข้อมูลวิทยากร</h2><p>ทั้งหมด ${S.speakers.length} คน</p></div>
+  <div class="page-head"><div><h2>ข้อมูลวิทยากร</h2><p>ทั้งหมด ${S.speakers.length} คน · แสดง ${sps.length} รายการ</p></div>
    <div class="spacer"></div>
+   <input class="inp" style="max-width:230px" placeholder="ค้นหาวิทยากร / ฐาน" value="${esc(spQ)}" oninput="spQ=this.value;render()">
    <button class="btn ghost sm" onclick="exportSpeakers()">⤓ Export .xlsx</button>
    <button class="btn sm" onclick="editSpeaker()">+ เพิ่มวิทยากร</button></div>
   <div class="row c2">
-  ${S.speakers.map(s=>`<div class="card card-pad" style="border-left:4px solid ${baseColor(s.base)}">
+  ${sps.map(s=>`<div class="card card-pad" style="border-left:4px solid ${baseColor(s.base)}">
     <div style="display:flex;gap:10px;align-items:flex-start">
       <div style="flex:1">
         <h3 style="font-size:16px">${esc(s.name)}</h3>
@@ -818,23 +823,44 @@ function copyLink(id){const i=$('#'+id);i.select();document.execCommand('copy');
 async function setCfg(k,v2){S.cfg[k]=v2;await C.settings.doc('main').set({[k]:v2},{merge:true});toast('บันทึกแล้ว');}
 
 /* ================= 6. RESULTS ================= */
-let rTab='choice';
+let rTab='choice', rQ='';
+const hitQ=(q,...f)=>{const s2=String(q||'').trim(); if(!s2) return true;
+  return f.filter(Boolean).join(' ').toLowerCase().includes(s2.toLowerCase());};
 function vResults(v){
   v.innerHTML=`
   <div class="page-head"><div><h2>ผลตอบแบบสอบถาม</h2><p>ดูรายการตอบกลับและส่งออกเป็นไฟล์ Excel</p></div>
     <div class="spacer"></div>
+    <button class="btn ghost sm" onclick="purgeDup()">🧹 ล้างรายการซ้ำ (เก็บล่าสุด)</button>
     <button class="btn ghost sm" onclick="exportAll()">⤓ Export ทั้งหมด (.xlsx)</button></div>
   <div class="toolbar">
     <button class="btn ${rTab==='choice'?'':'ghost'} sm" onclick="rTab='choice';render()">ความต้องการเข้าฐาน (${S.choices.length})</button>
     <button class="btn ${rTab==='eval'?'':'ghost'} sm" onclick="rTab='eval';render()">ความพึงพอใจ (${S.evals.length})</button>
+    <div class="spacer"></div>
+    <input class="inp" style="max-width:250px" placeholder="ค้นหาชื่อ / ข้อความ / ฐาน" value="${esc(rQ)}"
+      oninput="rQ=this.value;render()">
   </div>
   ${rTab==='choice'?choiceTable():evalTable()}`;
 }
+async function purgeDup(){
+  const dc=dupIdsOf(S.choicesAll||[], c=>normFuzzy((c.prefix||'')+(c.name||'')));
+  const dp=dupIdsOf(S.partsAll||[], p2=>normFuzzy((p2.fname||'')+(p2.lname||'')));
+  if(!dc.length && !dp.length) return toast('ไม่พบรายการซ้ำ');
+  if(!confirm('พบคำตอบแบบสำรวจซ้ำ '+dc.length+' รายการ และรายชื่อผู้เข้าร่วมซ้ำ '+dp.length+' รายการ\n'+
+    'ระบบจะลบรายการเก่า เก็บเฉพาะรายการที่ส่งเข้ามาล่าสุด — ดำเนินการหรือไม่?')) return;
+  const b=db.batch();
+  dc.forEach(id=>b.delete(C.choices.doc(id)));
+  dp.forEach(id=>b.delete(C.participants.doc(id)));
+  await b.commit(); await reload();
+  toast('ล้างรายการซ้ำแล้ว '+(dc.length+dp.length)+' รายการ');
+}
 function choiceTable(){
   if(!S.choices.length) return '<div class="card"><div class="empty"><div class="big">📝</div>ยังไม่มีผู้ตอบแบบสำรวจ</div></div>';
+  const rows=S.choices.filter(c=>hitQ(rQ,(c.prefix||'')+c.name,c.level,c.room,c.c1,c.c2,c.c3))
+    .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(!rows.length) return '<div class="card"><div class="empty">ไม่พบรายการที่ตรงกับคำค้น</div></div>';
   return `<div class="tw"><table><thead><tr><th class="num">#</th><th>ชื่อ–สกุล</th><th>ชั้น/ห้อง</th>
     <th>อันดับ 1</th><th>อันดับ 2</th><th>อันดับ 3</th><th>เวลาตอบ</th><th></th></tr></thead><tbody>
-    ${S.choices.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map((c,i)=>`<tr>
+    ${rows.map((c,i)=>`<tr>
       <td class="num">${i+1}</td><td><b>${esc((c.prefix||'')+c.name)}</b></td>
       <td>${esc(c.level||'')}${c.room?'/'+esc(c.room):''}</td>
       ${[c.c1,c.c2,c.c3].map(x=>`<td>${x?`<span class="tag" style="background:${baseColor(x)}1a;color:${baseColor(x)}">${esc(baseShort(x))}</span>`:'—'}</td>`).join('')}
@@ -846,7 +872,8 @@ function evalTable(){
   if(!S.evals.length) return '<div class="card"><div class="empty"><div class="big">⭐</div>ยังไม่มีผู้ตอบแบบประเมิน</div></div>';
   return `<div class="tw"><table><thead><tr><th class="num">#</th><th>สถานะผู้ตอบ</th><th>ฐาน</th>
     ${EVAL_Q.map((_,i)=>`<th title="${esc(EVAL_Q[i])}">ข้อ ${i+1}</th>`).join('')}<th>เฉลี่ย</th><th>ความประทับใจ</th><th>ข้อเสนอแนะ</th><th></th></tr></thead><tbody>
-    ${S.evals.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map((e,i)=>`<tr>
+    ${S.evals.filter(e=>hitQ(rQ,e.role,e.base,e.impression,e.suggestion))
+      .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map((e,i)=>`<tr>
       <td class="num">${i+1}</td><td>${esc(e.role||'-')}</td><td>${e.base?esc(baseShort(e.base)):'—'}</td>
       ${EVAL_Q.map((_,j)=>`<td style="text-align:center">${e['q'+(j+1)]||'-'}</td>`).join('')}
       <td style="text-align:center"><b>${avgOf(e).toFixed(2)}</b></td>
@@ -888,6 +915,7 @@ function xlsx(sheets,fname){
 let tagSel={base:'',ids:null};
 function vTags(v){
   const list=S.parts.filter(p=>!tagSel.base||(tagSel.base==='__none'?!p.base:p.base===tagSel.base))
+    .filter(p=>hitQ(tagSel.q,fullName(p),p.level,p.room,p.sid,p.base))
     .sort((a,b)=>sortTH(a.base||'zz',b.base||'zz')||sortTH(a.fname||'',b.fname||''));
   v.innerHTML=`
   <div class="page-head"><div><h2>พิมพ์ป้ายชื่อ</h2>
@@ -897,6 +925,8 @@ function vTags(v){
       <option value="">— ทุกฐาน —</option><option value="__none" ${tagSel.base==='__none'?'selected':''}>ยังไม่จัดฐาน</option>
       ${S.bases.map(b=>`<option ${tagSel.base===b.name?'selected':''}>${esc(b.name)}</option>`).join('')}
     </select>
+    <input class="inp" style="max-width:210px" placeholder="ค้นหาชื่อ / เลขประจำตัว" value="${esc(tagSel.q||'')}"
+      oninput="tagSel.q=this.value;tagSel.ids=null;render()">
     <span style="color:var(--muted);font-size:13.5px">เลือกแล้ว <b id="selCount">${(tagSel.ids||list.map(p=>p.id)).length}</b> ป้าย
       (${Math.ceil(((tagSel.ids||list.map(p=>p.id)).length)/4)} แผ่น A4)</span>
     <div class="spacer"></div>
@@ -1089,8 +1119,9 @@ function signBlock(signs){
   return `<div class="cert-signs${list.length<=3?' few':''}${ceSel.useSig?' sig-on':''}">${rows.map(row).join('')}</div>`;
 }
 function certTargets(){
-  if(ceSel.mode==='speaker') return S.speakers.slice();
+  if(ceSel.mode==='speaker') return S.speakers.filter(x=>hitQ(ceSel.q,x.name,x.base,x.org));
   return S.parts.filter(p=>!ceSel.base||p.base===ceSel.base)
+    .filter(p=>hitQ(ceSel.q,fullName(p),p.level,p.room,p.base))
     .filter(p=>!ceSel.ids||ceSel.ids.includes(p.id));
 }
 function certOne(x){
@@ -1126,6 +1157,8 @@ function vCerts(v){
       <option value="">— ทุกฐาน —</option>
       ${S.bases.map(b=>`<option ${ceSel.base===b.name?'selected':''}>${esc(b.name)}</option>`).join('')}
     </select>`:''}
+    <input class="inp" style="max-width:210px" placeholder="ค้นหาชื่อ" value="${esc(ceSel.q||'')}"
+      oninput="ceSel.q=this.value;ceSel.ids=null;render()">
     <span style="color:var(--muted);font-size:13.5px">จะพิมพ์ <b>${list.length}</b> ใบ</span>
     <label class="chk"><input type="checkbox" ${ceSel.useSig?'checked':''} onchange="ceSel.useSig=this.checked;render()">
       ใช้ลายเซ็นสแกน</label>
@@ -1662,6 +1695,20 @@ async function wipe(col,label){
 
 /* ================= SYNC: แบบสำรวจ -> รายชื่อนักเรียน ================= */
 const normN = s => String(s||'').replace(/[\s ]/g,'');
+/* เก็บเฉพาะรายการล่าสุดของแต่ละคน (คีย์ซ้ำ = ใช้ createdAt มากสุด) */
+function dedupLatest(arr,keyFn){
+  const m=new Map();
+  arr.forEach(x=>{
+    const k=keyFn(x); if(!k){ m.set('__'+Math.random(),x); return; }
+    const cur=m.get(k);
+    if(!cur || (x.createdAt||0)>=(cur.createdAt||0)) m.set(k,x);
+  });
+  return [...m.values()];
+}
+function dupIdsOf(arr,keyFn){
+  const keep=new Set(dedupLatest(arr,keyFn).map(x=>x.id));
+  return arr.filter(x=>!keep.has(x.id)).map(x=>x.id);
+}
 function splitName(name){
   let t=String(name||'').trim(), pre='';
   for(const m of ['เด็กชาย','เด็กหญิง','นางสาว','นาย','นาง','ด.ช.','ด.ญ.']){
