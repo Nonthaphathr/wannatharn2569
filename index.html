@@ -470,8 +470,16 @@ function renderNav(){
 function go(k){TAB=k;renderNav();render();window.scrollTo({top:0,behavior:'smooth'});}
 function render(){
   const v=$('#view');
+  // จำช่องที่กำลังพิมพ์อยู่ เพื่อคืนโฟกัสหลังวาดหน้าใหม่ (พิมพ์ต่อเนื่องได้ไม่ต้องคลิกซ้ำ)
+  const ae=document.activeElement;
+  const keepId=(ae&&ae.tagName==='INPUT'&&ae.id&&ae.id.startsWith('q_'))?ae.id:null;
+  const keepPos=keepId?ae.selectionStart:0;
   ({dash:vDash,parts:vParts,speakers:vSpeakers,bases:vBases,forms:vForms,results:vResults,
     board:vBoard,coupons:vCoupons,certs:vCerts,tags:vTags,roster:vRoster,settings:vSettings}[TAB]||vDash)(v);
+  if(keepId){
+    const el=$('#'+keepId);
+    if(el){ el.focus(); try{ el.setSelectionRange(keepPos,keepPos); }catch(e){} }
+  }
 }
 
 /* ================= 1. DASHBOARD ================= */
@@ -555,7 +563,7 @@ function vParts(v){
   v.innerHTML=`
   <div class="page-head"><div><h2>ข้อมูลผู้เข้าร่วมโครงการ</h2><p>ทั้งหมด ${S.parts.length} คน · แสดง ${list.length} รายการ</p></div></div>
   <div class="toolbar">
-    <input class="inp" style="max-width:230px" placeholder="ค้นหาชื่อ / เลขประจำตัว" value="${esc(pFilter.q)}" oninput="pFilter.q=this.value;render()">
+    <input class="inp" style="max-width:230px" id="q_parts" placeholder="ค้นหาชื่อ / เลขประจำตัว" value="${esc(pFilter.q)}" oninput="pFilter.q=this.value;render()">
     <select class="inp" style="max-width:210px" onchange="pFilter.base=this.value;render()">
       <option value="">— ทุกฐาน —</option><option value="__none">ยังไม่จัดฐาน</option>
       ${S.bases.map(b=>`<option ${pFilter.base===b.name?'selected':''}>${esc(b.name)}</option>`).join('')}
@@ -668,7 +676,7 @@ function vSpeakers(v){
   v.innerHTML=`
   <div class="page-head"><div><h2>ข้อมูลวิทยากร</h2><p>ทั้งหมด ${S.speakers.length} คน · แสดง ${sps.length} รายการ</p></div>
    <div class="spacer"></div>
-   <input class="inp" style="max-width:230px" placeholder="ค้นหาวิทยากร / ฐาน" value="${esc(spQ)}" oninput="spQ=this.value;render()">
+   <input class="inp" style="max-width:230px" id="q_sp" placeholder="ค้นหาวิทยากร / ฐาน" value="${esc(spQ)}" oninput="spQ=this.value;render()">
    <button class="btn ghost sm" onclick="exportSpeakers()">⤓ Export .xlsx</button>
    <button class="btn sm" onclick="editSpeaker()">+ เพิ่มวิทยากร</button></div>
   <div class="row c2">
@@ -836,7 +844,7 @@ function vResults(v){
     <button class="btn ${rTab==='choice'?'':'ghost'} sm" onclick="rTab='choice';render()">ความต้องการเข้าฐาน (${S.choices.length})</button>
     <button class="btn ${rTab==='eval'?'':'ghost'} sm" onclick="rTab='eval';render()">ความพึงพอใจ (${S.evals.length})</button>
     <div class="spacer"></div>
-    <input class="inp" style="max-width:250px" placeholder="ค้นหาชื่อ / ข้อความ / ฐาน" value="${esc(rQ)}"
+    <input class="inp" id="q_res" style="max-width:250px" placeholder="ค้นหาชื่อ / ข้อความ / ฐาน" value="${esc(rQ)}"
       oninput="rQ=this.value;render()">
   </div>
   ${rTab==='choice'?choiceTable():evalTable()}`;
@@ -925,7 +933,7 @@ function vTags(v){
       <option value="">— ทุกฐาน —</option><option value="__none" ${tagSel.base==='__none'?'selected':''}>ยังไม่จัดฐาน</option>
       ${S.bases.map(b=>`<option ${tagSel.base===b.name?'selected':''}>${esc(b.name)}</option>`).join('')}
     </select>
-    <input class="inp" style="max-width:210px" placeholder="ค้นหาชื่อ / เลขประจำตัว" value="${esc(tagSel.q||'')}"
+    <input class="inp" id="q_tag" style="max-width:210px" placeholder="ค้นหาชื่อ / เลขประจำตัว" value="${esc(tagSel.q||'')}"
       oninput="tagSel.q=this.value;tagSel.ids=null;render()">
     <span style="color:var(--muted);font-size:13.5px">เลือกแล้ว <b id="selCount">${(tagSel.ids||list.map(p=>p.id)).length}</b> ป้าย
       (${Math.ceil(((tagSel.ids||list.map(p=>p.id)).length)/4)} แผ่น A4)</span>
@@ -1157,7 +1165,7 @@ function vCerts(v){
       <option value="">— ทุกฐาน —</option>
       ${S.bases.map(b=>`<option ${ceSel.base===b.name?'selected':''}>${esc(b.name)}</option>`).join('')}
     </select>`:''}
-    <input class="inp" style="max-width:210px" placeholder="ค้นหาชื่อ" value="${esc(ceSel.q||'')}"
+    <input class="inp" id="q_cert" style="max-width:210px" placeholder="ค้นหาชื่อ" value="${esc(ceSel.q||'')}"
       oninput="ceSel.q=this.value;ceSel.ids=null;render()">
     <span style="color:var(--muted);font-size:13.5px">จะพิมพ์ <b>${list.length}</b> ใบ</span>
     <label class="chk"><input type="checkbox" ${ceSel.useSig?'checked':''} onchange="ceSel.useSig=this.checked;render()">
