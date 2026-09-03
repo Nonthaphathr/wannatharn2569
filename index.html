@@ -12,6 +12,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
   --brown-900:#3b2519; --brown-800:#4e3324; --brown-700:#6b4630; --brown-600:#845a3d;
@@ -240,6 +241,11 @@ dialog::backdrop{background:rgba(59,37,25,.45);backdrop-filter:blur(2px)}
 .cert-signs.few .sigbox img{max-height:13mm}
 .cert-signs b{display:block;font-family:var(--head);font-weight:700;font-size:4.2mm;color:#4a3520;line-height:1.2}
 .cert-signs span{display:block;font-size:2.7mm;color:#5f4630;margin-top:.6mm;line-height:1.3;white-space:nowrap}
+.certpage.one-sign .cert-logos{margin-top:5px}
+.certpage.one-sign .cert-div{margin-bottom:0}
+.certpage.one-sign .cert-signs{margin-top:9mm}
+.certpage.one-sign .cert-in{justify-content:center;padding-top:8mm;padding-bottom:10mm}
+.certpage.one-sign .cert-signs .cert-row:first-child{transform:translateY(-7px)}
 .cert-signs.few .cert-row .sg{width:auto;min-width:62mm}
 .cert-signs.few b{font-size:5.4mm}
 .cert-signs.few span{font-size:4.6mm}
@@ -1110,7 +1116,8 @@ function certLogos(){
 }
 function certHTML(o){   // {name, role, signs:[{n,t}], bg}
   const bg=o.bg?`<img class="bg" src="${o.bg}" alt="">`:'';
-  return `<div class="certpage">${bg}<div class="cert-in">
+  const few=o.signs.filter(x=>x&&x.n).length<=3;
+  return `<div class="certpage${few?' one-sign':''}">${bg}<div class="cert-in">
     ${certLogos()}
     <div class="cert-school">${esc(S.cfg.school||'โรงเรียนกระดุมทองวิทยา')}</div>
     <div class="cert-lead">ขอมอบเกียรติบัตรฉบับนี้เพื่อแสดงว่า</div>
@@ -1183,6 +1190,7 @@ function vCerts(v){
     <label class="chk"><input type="checkbox" ${ceSel.useSig?'checked':''} onchange="ceSel.useSig=this.checked;render()">
       ใช้ลายเซ็นสแกน</label>
     <div class="spacer"></div>
+    <button class="btn ghost sm" onclick="exportCertsDocx()">⤓ เกียรติบัตร (.docx)</button>
     <button class="btn ghost sm" onclick="exportMcScript()">⤓ สคริปต์พิธีกร (.docx)</button>
     ${ceSel.mode==='student'?`<button class="btn ghost sm" onclick="addWalkIn()">+ เพิ่มรายชื่อ (Walk-in)</button>
     <button class="btn ghost sm" onclick="ceAll(true)">เลือกทั้งหมด</button>
@@ -1391,6 +1399,79 @@ ${L.map(para).join('')}
   a.download='สคริปต์พิธีกร-มอบเกียรติบัตร.docx';
   a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
   toast('ส่งออกสคริปต์พิธีกรแล้ว');
+}
+/* ---- ส่งออกเกียรติบัตรเป็นไฟล์ Word (หน้าละ 1 ใบ ภาพเต็มหน้า A4 แนวนอน) ---- */
+async function exportCertsDocx(){
+  if(typeof JSZip==='undefined'||typeof html2canvas==='undefined')
+    return toast('โหลดไลบรารีไม่สำเร็จ (ต้องต่ออินเทอร์เน็ต)');
+  const list=certTargets();
+  if(!list.length) return toast('ยังไม่มีรายชื่อสำหรับส่งออก');
+  if(list.length>60 && !confirm('จะส่งออก '+list.length+' ใบ ไฟล์อาจใหญ่และใช้เวลาสักครู่ — ดำเนินการต่อหรือไม่?')) return;
+  toast('กำลังสร้างไฟล์ Word … ('+list.length+' ใบ)');
+  const stage=document.createElement('div');
+  stage.style.cssText='position:fixed;left:-10000px;top:0;z-index:-1;background:#fff';
+  document.body.appendChild(stage);
+  const imgs=[];
+  try{
+    for(let i=0;i<list.length;i++){
+      stage.innerHTML=certOne(list[i]);
+      const node=stage.querySelector('.certpage');
+      await new Promise(r=>setTimeout(r,60));   // รอรูปพื้นหลัง/โลโก้โหลด
+      const cv=await html2canvas(node,{scale:1.6,backgroundColor:'#ffffff',useCORS:true,logging:false});
+      imgs.push(cv.toDataURL('image/jpeg',0.9).split(',')[1]);
+    }
+  }catch(e){ document.body.removeChild(stage); return toast('สร้างภาพไม่สำเร็จ: '+e.message); }
+  document.body.removeChild(stage);
+  // A4 แนวนอน: 297x210mm = 10692000 x 7560000 EMU
+  const CX=10692000, CY=7560000;
+  let body='', rels='';
+  imgs.forEach((d,i)=>{
+    const id='rId'+(i+10);
+    rels+=`<Relationship Id="${id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/cert${i+1}.jpg"/>`;
+    body+=`<w:p><w:pPr><w:spacing w:after="0"/><w:jc w:val="center"/></w:pPr><w:r><w:drawing>
+      <wp:inline distT="0" distB="0" distL="0" distR="0" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">
+      <wp:extent cx="${CX}" cy="${CY}"/><wp:docPr id="${i+1}" name="cert${i+1}"/>
+      <a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+      <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
+      <pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
+      <pic:nvPicPr><pic:cNvPr id="${i+1}" name="cert${i+1}.jpg"/><pic:cNvPicPr/></pic:nvPicPr>
+      <pic:blipFill><a:blip r:embed="${id}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/>
+      <a:stretch><a:fillRect/></a:stretch></pic:blipFill>
+      <pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${CX}" cy="${CY}"/></a:xfrm>
+      <a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic>
+      </wp:inline></w:drawing></w:r></w:p>`;
+    if(i<imgs.length-1) body+='<w:p><w:pPr><w:spacing w:after="0"/></w:pPr><w:r><w:br w:type="page"/></w:r></w:p>';
+  });
+  const doc=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+ xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>${body}
+<w:sectPr><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>
+<w:pgMar w:top="0" w:right="0" w:bottom="0" w:left="0" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr>
+</w:body></w:document>`;
+  const zip=new JSZip();
+  zip.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Default Extension="jpg" ContentType="image/jpeg"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`);
+  zip.folder('_rels').file('.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+  const w=zip.folder('word');
+  w.file('document.xml',doc);
+  w.folder('_rels').file('document.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${rels}</Relationships>`);
+  const media=w.folder('media');
+  imgs.forEach((d,i)=>media.file('cert'+(i+1)+'.jpg',d,{base64:true}));
+  const blob=await zip.generateAsync({type:'blob',
+    mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='เกียรติบัตร-'+(ceSel.mode==='speaker'?'วิทยากร':(ceSel.kind==='award'?'ผลงานดีเด่น':'ผู้เข้าร่วม'))+'.docx';
+  a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  toast('ส่งออกเกียรติบัตร '+imgs.length+' ใบแล้ว');
 }
 function printCerts(){
   const list=certTargets();
