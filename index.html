@@ -630,15 +630,27 @@ function editPart(id){
     if(id){
       await C.participants.doc(id).update(d);
       // ซิงก์ชื่อ/ชั้น/ห้องไปยังคำตอบแบบสำรวจที่ผูกกับนักเรียนคนนี้ด้วย
-      const oldKey=normFuzzy(fullName(p));
-      const linked=S.choices.filter(c=>c.pid===id ||
-        (!c.pid && normFuzzy((c.prefix||'')+c.name)===oldKey) || normFuzzy(c.name)===oldKey);
-      if(linked.length){
-        const b=db.batch();
-        linked.forEach(c=>b.update(C.choices.doc(c.id),
-          {pid:id, prefix:d.prefix, name:(d.fname+' '+d.lname).trim(), level:d.level, room:d.room}));
-        await b.commit();
-      }
+      const oldKey=normFuzzy((p.fname||'')+(p.lname||''));
+      const b=db.batch(); let n=0;
+      // 1) คำตอบแบบสำรวจ (ทุกเรคคอร์ด รวมที่ถูกกรองซ้ำออก)
+      (S.choicesAll||S.choices).forEach(c=>{
+        if(c.pid===id || normFuzzy((c.prefix||'')+(c.name||''))===oldKey || normFuzzy(c.name||'')===oldKey){
+          b.update(C.choices.doc(c.id),
+            {pid:id, prefix:d.prefix, name:(d.fname+' '+d.lname).trim(), level:d.level, room:d.room}); n++;
+        }});
+      // 2) เรคคอร์ดผู้เข้าร่วมที่ซ้ำกับคนนี้ (ให้ชื่อตรงกันทั้งหมด)
+      (S.partsAll||[]).forEach(x=>{
+        if(x.id!==id && normFuzzy((x.fname||'')+(x.lname||''))===oldKey){
+          b.update(C.participants.doc(x.id),
+            {prefix:d.prefix,fname:d.fname,lname:d.lname,level:d.level,room:d.room,sid:d.sid,base:d.base}); n++;
+        }});
+      // 3) ทะเบียนชื่อนักเรียนทั้งโรงเรียน (Autofill)
+      S.roster.forEach(r=>{
+        if(normFuzzy((r.fname||'')+(r.lname||''))===oldKey){
+          b.update(C.roster.doc(r.id),
+            {prefix:d.prefix,fname:d.fname,lname:d.lname,level:d.level,room:d.room,sid:d.sid||r.sid||''}); n++;
+        }});
+      if(n) await b.commit();
     }
     else {d.createdAt=Date.now(); await C.participants.add(d);}
     await reload(); toast('บันทึกแล้ว');
@@ -1172,7 +1184,8 @@ function vCerts(v){
       ใช้ลายเซ็นสแกน</label>
     <div class="spacer"></div>
     <button class="btn ghost sm" onclick="exportMcScript()">⤓ สคริปต์พิธีกร (.docx)</button>
-    ${ceSel.mode==='student'?`<button class="btn ghost sm" onclick="ceAll(true)">เลือกทั้งหมด</button>
+    ${ceSel.mode==='student'?`<button class="btn ghost sm" onclick="addWalkIn()">+ เพิ่มรายชื่อ (Walk-in)</button>
+    <button class="btn ghost sm" onclick="ceAll(true)">เลือกทั้งหมด</button>
     <button class="btn ghost sm" onclick="ceAll(false)">ล้างการเลือก</button>`:''}
     <button class="btn sm" onclick="printCerts()">🖨 พิมพ์เกียรติบัตร</button>
   </div>
@@ -1193,6 +1206,39 @@ function vCerts(v){
         bg:ceSel.mode==='speaker'?S.cfg.bgSpeaker:S.cfg.bgStudent,signs:[{n:S.cfg.dirName||'',t:S.cfg.dirTitle||''}]})}
     </div>
   </div>`;
+}
+function addWalkIn(){
+  const body = `
+    <p style="font-size:13.5px;color:var(--muted);margin-bottom:12px">
+      สำหรับนักเรียนที่มาร่วมกิจกรรมหน้างานโดยไม่ได้ลงทะเบียนล่วงหน้า — เพิ่มแล้วจะปรากฏในรายชื่อพิมพ์เกียรติบัตร
+      ป้ายชื่อ และใบรายชื่อทันที</p>
+    <div class="row c3">
+      <div class="field"><label>คำนำหน้า</label><select class="inp" id="w_prefix">
+        ${['เด็กชาย','เด็กหญิง','นาย','นางสาว'].map(x=>`<option>${x}</option>`).join('')}</select></div>
+      <div class="field"><label>ชื่อ</label><input class="inp" id="w_fname"></div>
+      <div class="field"><label>นามสกุล</label><input class="inp" id="w_lname"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>ระดับชั้น</label><select class="inp" id="w_level">
+        ${LEVELS.map(l=>`<option>${l}</option>`).join('')}</select></div>
+      <div class="field"><label>ห้อง</label><input class="inp" id="w_room" value="1"></div>
+      <div class="field"><label>เลขประจำตัว</label><input class="inp" id="w_sid"></div>
+    </div>
+    <div class="field"><label>ฐานกิจกรรม</label><select class="inp" id="w_base">
+      <option value="">— ยังไม่กำหนด —</option>
+      ${S.bases.map(x=>`<option ${ceSel.base===x.name?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div>`;
+  openDlg('เพิ่มรายชื่อนักเรียน Walk-in', body, async ()=>{
+    const fn=val('w_fname').trim(), ln=val('w_lname').trim();
+    if(!fn) return toast('กรุณากรอกชื่อ');
+    const key=normFuzzy(fn+ln);
+    if(S.parts.some(x=>normFuzzy((x.fname||'')+(x.lname||''))===key)){
+      if(!confirm('มีชื่อนี้อยู่ในระบบแล้ว ต้องการเพิ่มซ้ำหรือไม่?')) return;
+    }
+    await C.participants.add({prefix:val('w_prefix'),fname:fn,lname:ln,level:val('w_level'),
+      room:val('w_room').trim(),sid:val('w_sid').trim(),base:val('w_base'),note:'Walk-in',
+      source:'Walk-in หน้างาน',createdAt:Date.now()});
+    ceSel.ids=null; await reload(); toast('เพิ่มรายชื่อ Walk-in แล้ว');
+  }, 'เพิ่มรายชื่อ');
 }
 function ceAll(on){
   const ids=certTargets().map(x=>x.id);
